@@ -28,7 +28,7 @@ export function testEnvironment(
 ) {
   const sessions = new Map();
   const env = {
-    AI_MODEL: "@cf/meta/llama-3.1-8b-instruct",
+    AI_MODEL: "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
     AI: { run },
     LIMITER: { limit: async () => ({ success: true }) },
     SESSIONS: {
