@@ -90,6 +90,36 @@ test("concurrent requests with same ID create one turn", async () => {
   ]);
   assert.equal(calls, 1);
 });
+test("chat completion output produces a customer reply", async () => {
+  const env = testEnvironment(async () => ({ choices: [{ message: { content: "The amount on the letter worries me." } }] }));
+  const s = await start(env);
+  const r = await worker.fetch(request(`/api/sessions/${s.id}/message`, "POST", msg()), env);
+  assert.equal(r.status, 200);
+  assert.equal((await r.json()).messages.at(-1).content, "The amount on the letter worries me.");
+});
+test("unavailable model identifies the provider code and retains the session", async () => {
+  const env = testEnvironment(async () => { throw Error("5007: No such model"); });
+  const s = await start(env);
+  const r = await worker.fetch(request(`/api/sessions/${s.id}/message`, "POST", msg()), env);
+  assert.equal(r.status, 503);
+  const error = await r.json();
+  assert.equal(error.providerCode, "5007");
+  assert.match(error.error, /no longer available/);
+  const state = await worker.fetch(request(`/api/sessions/${s.id}`), env);
+  assert.equal((await state.json()).messages.length, 1);
+});
+test("assessment does not retry a provider quota failure", async () => {
+  let calls = 0;
+  const env = testEnvironment(async (model, input) => {
+    if (input.response_format) { calls++; throw Error("3036: daily neuron quota exceeded"); }
+    return { response: "Please explain the letter." };
+  });
+  const s = await start(env);
+  await worker.fetch(request(`/api/sessions/${s.id}/message`, "POST", msg()), env);
+  const r = await worker.fetch(request(`/api/sessions/${s.id}/assess`, "POST", {}), env);
+  assert.equal(r.status, 503);
+  assert.equal(calls, 1);
+});
 test("quota error retains transcript and permits retry without duplicating advisor message", async () => {
   let fail = true;
   const env = testEnvironment(async () => {
