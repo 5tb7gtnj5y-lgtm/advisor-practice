@@ -1,0 +1,395 @@
+<!doctype html>
+<html lang="en-GB">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="theme-color" content="#13233f" />
+    <meta
+      name="description"
+      content="Fictional customer conversations and assessed practice for public-service advisors."
+    />
+    <title>Advisor Practice</title>
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="/style.css" />
+    <script src="/app.js" defer></script>
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+    <header>
+      <div class="brand">
+        <span class="brand-icon" aria-hidden="true">ap</span>
+        <div>
+          <strong>Advisor Practice</strong
+          ><span>Public-service customer simulations</span>
+        </div>
+      </div>
+      <div class="header-right">
+        <span id="connection">Checking service…</span
+        ><button class="quiet" id="helpButton" type="button">How to use</button>
+      </div>
+    </header>
+    <main id="main" tabindex="-1">
+      <div id="notice" class="notice" role="status" hidden></div>
+      <section id="setup">
+        <div class="page-title">
+          <div>
+            <p class="eyebrow">YOUR NEXT CONVERSATION</p>
+            <h1>A safe space to practise.</h1>
+            <p>
+              Talk to a fictional customer. Get feedback against the outcomes
+              that matter.
+            </p>
+          </div>
+          <span class="tag">AI customer · trainer-reviewed assessment</span>
+        </div>
+        <div class="setup-grid">
+          <form id="setupForm" class="panel settings">
+            <h2>Set up your session</h2>
+            <label for="advisor"
+              >Advisor name <span class="muted">(optional)</span></label
+            ><input
+              id="advisor"
+              maxlength="80"
+              placeholder="Name for your report"
+              autocomplete="off"
+            />
+            <label for="scenario">Customer scenario</label
+            ><select id="scenario" required></select>
+            <label for="level">Difficulty</label
+            ><select id="level">
+              <option value="foundation">Foundation — cooperative</option>
+              <option value="intermediate">Intermediate — concerned</option>
+              <option value="advanced">Advanced — challenging</option>
+            </select>
+            <label for="minutes">Time limit</label
+            ><select id="minutes">
+              <option value="5">5 minutes</option>
+              <option value="10" selected>10 minutes</option>
+              <option value="15">15 minutes</option>
+              <option value="20">20 minutes</option>
+              <option value="30">30 minutes</option>
+              <option value="60">60 minutes</option>
+              <option value="0">No time limit</option>
+            </select>
+            <label for="passMark">Pass mark (%)</label
+            ><input
+              id="passMark"
+              type="number"
+              min="1"
+              max="100"
+              value="70"
+              required
+            />
+            <div class="small-note">
+              Essential outcomes must also score at least 2 out of 4.
+            </div>
+            <button class="primary full" id="start" type="submit" disabled>
+              Start conversation
+            </button>
+            <p class="small-note">
+              Use fictional details only. Your attempt is retained for 24 hours.
+              Download your report before it expires.
+            </p>
+          </form>
+          <div class="setup-content">
+            <article class="panel scenario-preview">
+              <p class="eyebrow" id="category">CUSTOMER SCENARIO</p>
+              <h2 id="scenarioTitle">Loading scenarios…</h2>
+              <p id="scenarioBrief"></p>
+              <div class="customer-intro">
+                <span class="avatar" aria-hidden="true" id="previewInitials"
+                  >AM</span
+                >
+                <div>
+                  <strong id="customerName"></strong>
+                  <p id="opening"></p>
+                </div>
+              </div>
+              <details>
+                <summary>Read the training guidance</summary>
+                <p id="previewGuidance" class="preserve"></p>
+              </details>
+            </article>
+            <article class="panel">
+              <div class="section-heading">
+                <h2>What you’ll be assessed on</h2>
+                <span class="tag">0–4 per outcome</span>
+              </div>
+              <div id="outcomesPreview" class="outcome-preview"></div>
+              <p class="small-note">
+                Your report quotes your own messages as evidence. AI scores are
+                provisional until reviewed by a trainer.
+              </p>
+            </article>
+          </div>
+        </div>
+        <details class="panel trainer">
+          <summary>
+            Trainer settings — edit outcomes or create a scenario
+          </summary>
+          <p>
+            These settings apply to the next attempt. Save a training profile to
+            use the same setup with another advisor. This is an open practice
+            tool; settings are not locked for formal exams.
+          </p>
+          <div class="section-heading">
+            <h3>Key outcomes</h3>
+            <button id="addOutcome" class="secondary" type="button">
+              Add outcome
+            </button>
+          </div>
+          <div id="rubricEditor"></div>
+          <h3>Custom scenario</h3>
+          <p class="small-note">
+            Complete these fields, then select “Custom scenario” above. Customer
+            facts are hidden during the conversation.
+          </p>
+          <div class="custom-grid">
+            <label
+              >Scenario title<input id="customTitle" maxlength="100" /></label
+            ><label
+              >Customer’s fictional name<input
+                id="customCustomer"
+                maxlength="60" /></label
+            ><label
+              >Advisor briefing<textarea
+                id="customBrief"
+                rows="3"
+                maxlength="1400"
+              ></textarea></label
+            ><label
+              >Customer’s opening message<textarea
+                id="customOpening"
+                rows="3"
+                maxlength="800"
+              ></textarea></label
+            ><label
+              >Training guidance<textarea
+                id="customGuidance"
+                rows="5"
+                maxlength="5000"
+                placeholder="Give the advisor the approved steps for this fictional exercise."
+              ></textarea></label
+            ><label
+              >Customer facts and hidden needs<textarea
+                id="customFacts"
+                rows="5"
+                maxlength="2500"
+                placeholder="Fictional background, concerns and details to reveal when asked."
+              ></textarea>
+            </label>
+          </div>
+          <div class="button-row">
+            <button id="saveProfile" class="secondary" type="button">
+              Download training profile</button
+            ><label class="file-button secondary"
+              >Load training profile<input
+                id="loadProfile"
+                type="file"
+                accept="application/json,.json" /></label
+            ><button id="restoreDefaults" class="quiet" type="button">
+              Restore default outcomes
+            </button>
+          </div>
+        </details>
+      </section>
+      <section id="session" hidden>
+        <div class="session-heading">
+          <div>
+            <p class="eyebrow" id="sessionLevel"></p>
+            <h1 id="sessionTitle"></h1>
+          </div>
+          <div class="session-actions">
+            <div class="timer-wrap">
+              <span id="timerLabel">Time remaining</span
+              ><strong id="timer">10:00</strong>
+            </div>
+            <button class="secondary" id="downloadTranscript">
+              Download transcript</button
+            ><button class="primary" id="finish">End & assess</button>
+          </div>
+        </div>
+        <div class="live-grid">
+          <article class="panel chat-panel">
+            <div class="chat-heading">
+              <div>
+                <span
+                  class="avatar"
+                  id="chatInitials"
+                  aria-hidden="true"
+                ></span>
+                <div>
+                  <strong id="chatName"></strong
+                  ><span>AI customer · fictional scenario</span>
+                </div>
+              </div>
+              <span id="phaseTag" class="tag">In progress</span>
+            </div>
+            <div
+              id="messages"
+              class="messages"
+              role="log"
+              aria-label="Customer conversation"
+              aria-live="polite"
+              aria-relevant="additions"
+            ></div>
+            <p class="chat-status" id="chatStatus" role="status"></p>
+            <form id="messageForm" class="composer">
+              <label for="message">Your reply as the advisor</label
+              ><textarea
+                id="message"
+                rows="3"
+                maxlength="1000"
+                placeholder="Type your response to the customer…"
+                required
+              ></textarea>
+              <div>
+                <span class="small-note"
+                  >Enter to send · Shift + Enter for a new line</span
+                ><button class="primary" id="send" type="submit">
+                  Send reply
+                </button>
+              </div>
+            </form>
+            <div class="session-ended" id="sessionEnded" hidden>
+              <p id="endExplanation"></p>
+              <button class="primary" id="retryAssessment">
+                Get assessment
+              </button>
+            </div>
+          </article>
+          <aside>
+            <article class="panel">
+              <p class="eyebrow">ADVISOR BRIEFING</p>
+              <p id="activeBrief"></p>
+              <details open>
+                <summary>Training guidance</summary>
+                <p id="activeGuidance" class="preserve"></p>
+              </details>
+            </article>
+            <article class="panel">
+              <h2>Key outcomes</h2>
+              <ol id="activeOutcomes" class="compact-list"></ol>
+              <p class="small-note">
+                The clock continues while the customer responds. A reply
+                submitted before the deadline can finish afterwards. Maximum: 30
+                advisor messages.
+              </p>
+            </article>
+          </aside>
+        </div>
+      </section>
+      <section id="report" hidden>
+        <div class="page-title">
+          <div>
+            <p class="eyebrow">CONVERSATION REVIEW</p>
+            <h1>Your assessment</h1>
+            <p id="reportSubtitle"></p>
+          </div>
+          <div class="button-row">
+            <button id="downloadReport" class="primary">Download report</button
+            ><button id="printReport" class="secondary">Print / save PDF</button
+            ><button id="newSession" class="quiet">New session</button>
+          </div>
+        </div>
+        <div class="report-summary panel">
+          <div class="score-block">
+            <strong id="score"></strong><span id="decision"></span>
+          </div>
+          <div>
+            <h2 id="reportSummaryTitle">Feedback</h2>
+            <p id="reportSummary"></p>
+            <p class="small-note" id="passRule"></p>
+            <p id="essentialGaps" class="essential-note" hidden></p>
+          </div>
+        </div>
+        <div class="notice">
+          AI assessment is provisional. A trainer should review the evidence and
+          record the final outcome below.
+        </div>
+        <div id="reportOutcomes"></div>
+        <article class="panel">
+          <h2>Focus for your next conversation</h2>
+          <ol id="nextSteps"></ol>
+        </article>
+        <article class="panel review-panel">
+          <h2>Trainer review</h2>
+          <div class="custom-grid">
+            <label>Reviewer name<input id="reviewer" maxlength="100" /></label
+            ><label
+              >Final trainer decision<select id="reviewDecision">
+                <option>Awaiting review</option>
+                <option>Pass</option>
+                <option>Needs more practice</option>
+                <option>Reassessment required</option>
+              </select></label
+            >
+          </div>
+          <label for="reviewNotes">Review notes</label
+          ><textarea
+            id="reviewNotes"
+            rows="4"
+            maxlength="5000"
+            placeholder="Record any score changes, reasoning and agreed next steps."
+          ></textarea>
+          <p class="small-note">
+            Review notes are included in your downloaded report. They are kept
+            on this page only until you leave it.
+          </p>
+        </article>
+        <details class="panel">
+          <summary>Full conversation transcript</summary>
+          <div id="reportTranscript" class="report-transcript"></div>
+        </details>
+        <details class="panel">
+          <summary>Scenario details for trainer review</summary>
+          <p id="reviewFacts" class="preserve"></p>
+          <p id="reviewGuidance" class="preserve"></p>
+        </details>
+        <div class="button-row">
+          <button class="quiet danger" id="deleteSession">
+            Delete this attempt</button
+          ><span class="small-note"
+            >Deletes the retained transcript and assessment immediately.</span
+          >
+        </div>
+      </section>
+    </main>
+    <footer>
+      Fictional training. No live customer accounts. No real tax advice.
+    </footer>
+    <dialog id="help">
+      <div class="section-heading">
+        <h2>How to use Advisor Practice</h2>
+        <button class="quiet" id="closeHelp" aria-label="Close instructions">
+          Close
+        </button>
+      </div>
+      <ol>
+        <li>Choose a scenario, difficulty and time limit.</li>
+        <li>Read the briefing and fictional training guidance.</li>
+        <li>
+          Select <strong>Start conversation</strong> and respond as the advisor.
+        </li>
+        <li>
+          Select <strong>End & assess</strong>, or let the timer end the
+          conversation.
+        </li>
+        <li>
+          Review the scores, evidence and suggested improvements with a trainer.
+        </li>
+        <li>Download the report before the 24-hour retention period ends.</li>
+      </ol>
+      <p>
+        Free AI has a shared daily allowance. If it runs out, the transcript
+        remains available to download. Keep the Cloudflare account on the Free
+        plan to avoid paid usage.
+      </p>
+      <p>
+        Your messages are sent to Cloudflare’s AI service. Use invented names
+        and identifiers. This practice app does not verify learner identity or
+        lock trainer settings.
+      </p>
+    </dialog>
+  </body>
+</html>

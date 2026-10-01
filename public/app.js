@@ -1,0 +1,743 @@
+"use strict";
+const $ = (id) => document.getElementById(id);
+let catalog,
+  session = null,
+  busy = false,
+  clockOffset = 0,
+  pending = null,
+  autoAttempt = false,
+  ready = false;
+const storage = {
+  get(k) {
+    try {
+      return localStorage.getItem(k);
+    } catch {
+      return null;
+    }
+  },
+  set(k, v) {
+    try {
+      localStorage.setItem(k, v);
+    } catch {}
+  },
+  remove(k) {
+    try {
+      localStorage.removeItem(k);
+    } catch {}
+  },
+};
+function el(tag, text, cls) {
+  const n = document.createElement(tag);
+  if (text !== undefined) n.textContent = text;
+  if (cls) n.className = cls;
+  return n;
+}
+function notify(text, error = false) {
+  $("notice").textContent = text;
+  $("notice").className = "notice" + (error ? " error" : "");
+  $("notice").hidden = !text;
+}
+async function api(path, options = {}) {
+  let res;
+  try {
+    res = await fetch(path, {
+      ...options,
+      headers: { "Content-Type": "application/json", ...options.headers },
+      signal: AbortSignal.timeout(120000),
+    });
+  } catch {
+    throw new Error(
+      "The connection was interrupted. Try again. Your saved session and transcript are still available.",
+    );
+  }
+  let data;
+  try {
+    data = await res.json();
+  } catch {
+    throw new Error(
+      "The server returned an unexpected response. Check that the Cloudflare Worker is deployed.",
+    );
+  }
+  if (!res.ok)
+    throw new Error(data.error || "The request could not be completed.");
+  return data;
+}
+const post = (path, data = {}) =>
+  api(path, { method: "POST", body: JSON.stringify(data) });
+const sessionPath = (suffix) =>
+  "/api/sessions/" + session.id + (suffix ? "/" + suffix : "");
+function show(view) {
+  for (const id of ["setup", "session", "report"]) $(id).hidden = id !== view;
+}
+function initials(name) {
+  return name
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((x) => x[0] || "")
+    .join("")
+    .toUpperCase();
+}
+function scenarioSelected() {
+  if (!catalog) return;
+  const s = catalog.scenarios.find((x) => x.id === $("scenario").value) || {
+    title: $("customTitle").value || "Your custom scenario",
+    brief:
+      $("customBrief").value ||
+      "Complete the custom scenario in Trainer settings below.",
+    customer: $("customCustomer").value || "Customer",
+    opening:
+      $("customOpening").value || "Your opening message will appear here.",
+    guidance:
+      $("customGuidance").value || "Add your fictional training guidance.",
+    category: "CUSTOM TRAINING",
+  };
+  for (const [id, key] of [
+    ["scenarioTitle", "title"],
+    ["scenarioBrief", "brief"],
+    ["customerName", "customer"],
+    ["opening", "opening"],
+    ["previewGuidance", "guidance"],
+    ["category", "category"],
+  ])
+    $(id).textContent = s[key];
+  $("previewInitials").textContent = initials(s.customer);
+}
+function rubricValues() {
+  return [...$("rubricEditor").children].map((row) => ({
+    title: row.querySelector('[data-field="title"]').value,
+    description: row.querySelector('[data-field="description"]').value,
+    weight: Number(row.querySelector('[data-field="weight"]').value),
+    essential: row.querySelector('[data-field="essential"]').checked,
+  }));
+}
+function previewOutcomes() {
+  const list = rubricValues();
+  $("outcomesPreview").replaceChildren();
+  list.forEach((o, i) => {
+    const row = el("div", undefined, "outcome-item");
+    row.append(el("span", i + 1, "outcome-number"));
+    const label = el("div", o.title || "Untitled outcome");
+    label.append(
+      el("small", o.weight + " weight" + (o.essential ? " · Essential" : "")),
+    );
+    row.append(label);
+    $("outcomesPreview").append(row);
+  });
+}
+function rubricEditor(items) {
+  $("rubricEditor").replaceChildren();
+  items.forEach((o) => addOutcome(o));
+  previewOutcomes();
+}
+function addOutcome(
+  o = { title: "", description: "", weight: 10, essential: false },
+) {
+  if ($("rubricEditor").children.length >= 10) {
+    notify("You can use up to 10 outcomes.", true);
+    return;
+  }
+  const row = el("div", undefined, "rubric-row");
+  for (const [field, title, type] of [
+    ["title", "Outcome title", "text"],
+    ["weight", "Weight", "number"],
+    ["description", "What does success look like?", "textarea"],
+  ]) {
+    const lab = el(
+      "label",
+      title,
+      field === "description" ? "description" : undefined,
+    );
+    const input = el(type === "textarea" ? "textarea" : "input");
+    input.dataset.field = field;
+    input.value = o[field];
+    if (type !== "textarea") input.type = type;
+    else {
+      input.rows = 2;
+      input.maxLength = 1000;
+    }
+    if (field === "weight") {
+      input.min = 1;
+      input.max = 100;
+    }
+    if (field === "title") input.maxLength = 120;
+    input.addEventListener("input", previewOutcomes);
+    lab.append(input);
+    row.append(lab);
+  }
+  const lab = el("label", undefined, "check");
+  const check = el("input");
+  check.type = "checkbox";
+  check.dataset.field = "essential";
+  check.checked = o.essential;
+  check.addEventListener("change", previewOutcomes);
+  lab.append(check, document.createTextNode("Essential (minimum 2/4)"));
+  row.append(lab);
+  const del = el("button", "Remove", "quiet danger");
+  del.type = "button";
+  del.addEventListener("click", () => {
+    if ($("rubricEditor").children.length === 1) {
+      notify("Keep at least one outcome.", true);
+      return;
+    }
+    row.remove();
+    previewOutcomes();
+  });
+  row.append(del);
+  $("rubricEditor").append(row);
+}
+const customMap = {
+  title: "customTitle",
+  customer: "customCustomer",
+  brief: "customBrief",
+  opening: "customOpening",
+  guidance: "customGuidance",
+  facts: "customFacts",
+};
+function settings() {
+  const config = {
+    advisor: $("advisor").value,
+    scenarioId: $("scenario").value,
+    level: $("level").value,
+    minutes: Number($("minutes").value),
+    passMark: Number($("passMark").value),
+    outcomes: rubricValues(),
+  };
+  if (config.scenarioId === "custom")
+    config.customScenario = Object.fromEntries(
+      Object.entries(customMap).map(([k, id]) => [k, $(id).value]),
+    );
+  return config;
+}
+function validateSettings(s) {
+  if (
+    !s.outcomes.length ||
+    s.outcomes.some(
+      (o) =>
+        !o.title.trim() ||
+        !o.description.trim() ||
+        o.weight < 1 ||
+        o.weight > 100 ||
+        !Number.isFinite(o.weight),
+    )
+  )
+    throw new Error(
+      "Complete each outcome’s title, success description and weight (1–100).",
+    );
+  if (
+    s.customScenario &&
+    ["title", "brief", "opening", "guidance", "facts"].some(
+      (k) => !s.customScenario[k].trim(),
+    )
+  )
+    throw new Error(
+      "Complete the custom scenario fields under Trainer settings.",
+    );
+}
+function download(name, content, type = "text/plain") {
+  const url = URL.createObjectURL(new Blob([content], { type }));
+  const a = el("a");
+  a.href = url;
+  a.download = name;
+  document.body.append(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
+}
+function applyProfile(p) {
+  if (
+    !p ||
+    p.kind !== "advisor-practice-profile" ||
+    !p.settings ||
+    !Array.isArray(p.settings.outcomes) ||
+    p.settings.outcomes.length < 1 ||
+    p.settings.outcomes.length > 10
+  )
+    throw new Error("This is not a valid Advisor Practice training profile.");
+  const s = p.settings;
+  validateSettings(s);
+  $("scenario").value = catalog.scenarios.some((x) => x.id === s.scenarioId)
+    ? s.scenarioId
+    : "custom";
+  $("level").value = ["foundation", "intermediate", "advanced"].includes(
+    s.level,
+  )
+    ? s.level
+    : "foundation";
+  $("minutes").value = [0, 5, 10, 15, 20, 30, 60].includes(Number(s.minutes))
+    ? s.minutes
+    : 10;
+  $("passMark").value = Math.min(100, Math.max(1, Number(s.passMark) || 70));
+  rubricEditor(s.outcomes);
+  const c = p.customScenario || s.customScenario || {};
+  for (const [k, id] of Object.entries(customMap))
+    $(id).value = String(c[k] || "");
+  scenarioSelected();
+}
+function setBusy(value, label = "") {
+  busy = value;
+  $("start").disabled = value || !ready;
+  $("send").disabled = value;
+  $("message").disabled = value || session?.phase !== "active";
+  $("finish").disabled = value;
+  $("retryAssessment").disabled = value;
+  $("chatStatus").textContent = label;
+}
+function renderMessage(m, target) {
+  const item = el(
+    "div",
+    undefined,
+    "message" + (m.role === "user" ? " advisor" : ""),
+  );
+  item.append(
+    el(
+      "span",
+      (m.role === "user" ? "Advisor" : "Customer") + " · turn " + m.turn,
+      "message-label",
+    ),
+    el("div", m.content, "bubble"),
+  );
+  target.append(item);
+}
+function adopt(s) {
+  const changed = !session || session.id !== s.id;
+  session = s;
+  clockOffset = s.serverNow - Date.now();
+  storage.set("advisorPracticeSession", s.id);
+  if (changed) {
+    autoAttempt = false;
+    $("messages").replaceChildren();
+  }
+  if (s.phase === "assessed") {
+    renderReport();
+    show("report");
+    return;
+  }
+  show("session");
+  $("sessionLevel").textContent =
+    s.config.level.toUpperCase() +
+    " · " +
+    (s.config.minutes ? s.config.minutes + " MINUTES" : "UNTIMED");
+  $("sessionTitle").textContent = s.config.scenario.title;
+  $("chatName").textContent = s.config.scenario.customer;
+  $("chatInitials").textContent = initials(s.config.scenario.customer);
+  $("activeBrief").textContent = s.config.scenario.brief;
+  $("activeGuidance").textContent = s.config.scenario.guidance;
+  $("activeOutcomes").replaceChildren(
+    ...s.config.outcomes.map((o) =>
+      el("li", o.title + (o.essential ? " (essential)" : "")),
+    ),
+  );
+  if ($("messages").children.length > s.messages.length)
+    $("messages").replaceChildren();
+  for (let i = $("messages").children.length; i < s.messages.length; i++)
+    renderMessage(s.messages[i], $("messages"));
+  $("messages").scrollTop = $("messages").scrollHeight;
+  const ended = s.phase !== "active";
+  $("phaseTag").textContent = ended ? "Conversation ended" : "In progress";
+  $("messageForm").hidden = ended;
+  $("sessionEnded").hidden = !ended;
+  $("finish").hidden = ended;
+  $("endExplanation").textContent =
+    (s.endReason || "Conversation ended") +
+    ". Your transcript is saved; get your assessment below.";
+  setBusy(busy);
+  tick();
+}
+function tick() {
+  if (!session || session.phase === "assessed") return;
+  const left = session.deadline
+    ? Math.max(0, session.deadline - Date.now() - clockOffset)
+    : null;
+  $("timer").textContent =
+    left === null
+      ? "Untimed"
+      : Math.floor(left / 60000)
+          .toString()
+          .padStart(2, "0") +
+        ":" +
+        Math.floor((left % 60000) / 1000)
+          .toString()
+          .padStart(2, "0");
+  $("timer").parentElement.classList.toggle(
+    "urgent",
+    left !== null && left < 60000,
+  );
+  $("timerLabel").textContent =
+    session.phase === "active" ? "Time remaining" : "Session ended";
+  if (
+    (session.phase === "active" && left === 0) ||
+    (session.phase === "ended" &&
+      ["Time limit reached", "30-message limit reached"].includes(
+        session.endReason,
+      ))
+  ) {
+    $("send").disabled = true;
+    $("message").disabled = true;
+    if (!busy && !autoAttempt) {
+      autoAttempt = true;
+      assess();
+    }
+  }
+}
+async function assess() {
+  if (!session || busy) return;
+  notify("");
+  setBusy(true, "Assessing the conversation… This may take a minute.");
+  try {
+    adopt(await post(sessionPath("assess")));
+    notify("");
+  } catch (e) {
+    notify(e.message, true);
+    try {
+      adopt(await api(sessionPath()));
+    } catch {}
+  } finally {
+    setBusy(false);
+    tick();
+  }
+}
+function renderReport() {
+  const s = session,
+    r = s.report;
+  $("reportSubtitle").textContent =
+    s.config.advisor +
+    " · " +
+    s.config.scenario.title +
+    " · " +
+    s.config.level +
+    " · " +
+    new Date(s.startedAt).toLocaleString("en-GB");
+  $("score").textContent = r.percent + "%";
+  $("decision").textContent = r.decision;
+  $("reportSummary").textContent = r.summary;
+  $("passRule").textContent =
+    "Pass mark: " +
+    r.passMark +
+    "%. Each essential outcome must score at least 2/4. Scores are weighted and calculated by the server.";
+  $("essentialGaps").hidden = !r.essentialGaps.length;
+  $("essentialGaps").textContent =
+    "Essential outcomes to improve: " + r.essentialGaps.join("; ");
+  $("reportOutcomes").replaceChildren();
+  r.outcomes.forEach((o) => {
+    const card = el("article", undefined, "panel assessment-card");
+    const heading = el("div", undefined, "section-heading");
+    heading.append(
+      el("h2", o.title + (o.essential ? " · Essential" : "")),
+      el("span", o.score + " / 4 · weight " + o.weight, "score-pill"),
+    );
+    card.append(
+      heading,
+      el("p", o.description, "small-note"),
+      el("p", o.feedback),
+    );
+    if (!o.evidence.length)
+      card.append(el("p", "No credited advisor evidence.", "small-note"));
+    for (const e of o.evidence) {
+      const q = el("blockquote", "“" + e.quote + "”");
+      q.append(el("cite", "Advisor · turn " + e.turn));
+      card.append(q);
+    }
+    if (o.improvement)
+      card.append(el("p", "Next time: " + o.improvement, "improvement"));
+    $("reportOutcomes").append(card);
+  });
+  $("nextSteps").replaceChildren(...r.nextSteps.map((x) => el("li", x)));
+  $("reportTranscript").replaceChildren();
+  s.messages.forEach((m) => renderMessage(m, $("reportTranscript")));
+  $("reviewFacts").textContent =
+    "Fictional customer profile: " + (s.reviewFacts || "Not available");
+  $("reviewGuidance").textContent =
+    "Training guidance: " + s.config.scenario.guidance;
+}
+function transcriptText() {
+  if (!session) return "";
+  return (
+    "ADVISOR PRACTICE — FICTIONAL TRAINING\nAdvisor: " +
+    session.config.advisor +
+    "\nScenario: " +
+    session.config.scenario.title +
+    "\nDifficulty: " +
+    session.config.level +
+    "\nStarted: " +
+    new Date(session.startedAt).toISOString() +
+    "\nEnded: " +
+    (session.endedAt
+      ? new Date(session.endedAt).toISOString()
+      : "In progress") +
+    "\nEnd reason: " +
+    (session.endReason || "—") +
+    "\nPass mark: " +
+    session.config.passMark +
+    "%\n\n" +
+    session.messages
+      .map(
+        (m) =>
+          "Turn " +
+          m.turn +
+          " — " +
+          (m.role === "user" ? "ADVISOR" : "CUSTOMER") +
+          "\n" +
+          m.content,
+      )
+      .join("\n\n")
+  );
+}
+function reportText() {
+  const r = session.report;
+  let t =
+    "TRAINING ASSESSMENT — AI SCORES REQUIRE TRAINER REVIEW\n\n" +
+    r.decision +
+    " — " +
+    r.percent +
+    "%\nPass mark: " +
+    r.passMark +
+    "%\nEssential outcomes require 2/4\n\n" +
+    r.summary +
+    "\n";
+  for (const o of r.outcomes)
+    t +=
+      "\n" +
+      o.title +
+      " — " +
+      o.score +
+      "/4, weight " +
+      o.weight +
+      (o.essential ? ", essential" : "") +
+      "\nSuccess: " +
+      o.description +
+      "\nFeedback: " +
+      o.feedback +
+      "\nEvidence: " +
+      (o.evidence.map((e) => "Turn " + e.turn + ": " + e.quote).join("\n") ||
+        "None credited") +
+      "\nNext time: " +
+      o.improvement +
+      "\n";
+  t +=
+    "\nNEXT STEPS\n" +
+    r.nextSteps.join("\n") +
+    "\n\nTRAINER REVIEW\nReviewer: " +
+    $("reviewer").value +
+    "\nDecision: " +
+    $("reviewDecision").value +
+    "\nNotes: " +
+    $("reviewNotes").value +
+    "\n\n" +
+    transcriptText() +
+    "\n\nTRAINING GUIDANCE\n" +
+    session.config.scenario.guidance +
+    "\n\nFICTIONAL CUSTOMER PROFILE\n" +
+    session.reviewFacts +
+    "\n\nAI model: " +
+    r.model +
+    "\nGenerated: " +
+    new Date(r.generatedAt).toISOString() +
+    "\nSession ID: " +
+    session.id;
+  return t;
+}
+$("setupForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  if (busy) return;
+  try {
+    const config = settings();
+    validateSettings(config);
+    notify("");
+    setBusy(true);
+    const s = await post("/api/sessions", config);
+    $("reviewer").value = "";
+    $("reviewNotes").value = "";
+    $("reviewDecision").value = "Awaiting review";
+    pending = null;
+    adopt(s);
+  } catch (err) {
+    notify(err.message, true);
+  } finally {
+    setBusy(false);
+    if (session?.phase === "active") $("message").focus();
+  }
+});
+$("messageForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  if (busy || !session || session.phase !== "active") return;
+  const content = $("message").value.trim();
+  if (!content) return;
+  if (session.deadline && Date.now() + clockOffset >= session.deadline) {
+    assess();
+    return;
+  }
+  if (!pending || pending.content !== content)
+    pending = { content, requestId: crypto.randomUUID() };
+  notify("");
+  setBusy(true, "The customer is replying…");
+  try {
+    adopt(await post(sessionPath("message"), pending));
+    $("message").value = "";
+    pending = null;
+  } catch (err) {
+    notify(err.message, true);
+    try {
+      adopt(await api(sessionPath()));
+    } catch {}
+  } finally {
+    setBusy(false);
+    tick();
+    if (session.phase === "active") $("message").focus();
+  }
+});
+$("message").addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && !e.shiftKey && !e.isComposing) {
+    e.preventDefault();
+    $("messageForm").requestSubmit();
+  }
+});
+$("finish").addEventListener("click", assess);
+$("retryAssessment").addEventListener("click", assess);
+$("scenario").addEventListener("change", scenarioSelected);
+for (const id of Object.values(customMap))
+  $(id).addEventListener("input", () => {
+    if ($("scenario").value === "custom") scenarioSelected();
+  });
+$("addOutcome").addEventListener("click", () => {
+  addOutcome();
+  previewOutcomes();
+});
+$("restoreDefaults").addEventListener("click", () =>
+  rubricEditor(catalog.outcomes),
+);
+$("saveProfile").addEventListener("click", () => {
+  try {
+    const s = settings();
+    validateSettings(s);
+    const customScenario = Object.fromEntries(
+      Object.entries(customMap).map(([k, id]) => [k, $(id).value]),
+    );
+    download(
+      "advisor-training-profile.json",
+      JSON.stringify(
+        {
+          kind: "advisor-practice-profile",
+          version: 1,
+          settings: { ...s, advisor: "" },
+          customScenario,
+        },
+        null,
+        2,
+      ),
+      "application/json",
+    );
+  } catch (e) {
+    notify(e.message, true);
+  }
+});
+$("loadProfile").addEventListener("change", async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  try {
+    if (file.size > 30000)
+      throw new Error("The training profile is too large.");
+    applyProfile(JSON.parse(await file.text()));
+    notify("Training profile loaded.");
+  } catch (err) {
+    notify(err.message || "Could not load this training profile.", true);
+  } finally {
+    e.target.value = "";
+  }
+});
+$("downloadTranscript").addEventListener("click", () =>
+  download("advisor-transcript.txt", transcriptText()),
+);
+$("downloadReport").addEventListener("click", () =>
+  download("advisor-assessment.txt", reportText()),
+);
+$("printReport").addEventListener("click", () => {
+  const details = [...$("report").querySelectorAll("details")];
+  const was = details.map((d) => d.open);
+  details.forEach((d) => (d.open = true));
+  const restore = () => {
+    details.forEach((d, i) => (d.open = was[i]));
+    window.removeEventListener("afterprint", restore);
+  };
+  window.addEventListener("afterprint", restore);
+  window.print();
+});
+$("newSession").addEventListener("click", () => {
+  storage.remove("advisorPracticeSession");
+  session = null;
+  autoAttempt = false;
+  pending = null;
+  show("setup");
+  notify("");
+  $("main").focus();
+  window.scrollTo(0, 0);
+});
+$("deleteSession").addEventListener("click", async () => {
+  if (
+    !confirm(
+      "Delete this attempt and its saved transcript? Download your report first if you need it.",
+    )
+  )
+    return;
+  try {
+    await api(sessionPath(), { method: "DELETE" });
+    $("newSession").click();
+    notify("Attempt deleted.");
+  } catch (e) {
+    notify(e.message, true);
+  }
+});
+$("helpButton").addEventListener("click", () => $("help").showModal());
+$("closeHelp").addEventListener("click", () => $("help").close());
+async function init() {
+  try {
+    const [c, health] = await Promise.all([
+      api("/api/catalog"),
+      api("/api/health"),
+    ]);
+    catalog = c;
+    for (const s of c.scenarios) {
+      const opt = el("option", s.title);
+      opt.value = s.id;
+      $("scenario").append(opt);
+    }
+    const opt = el("option", "Custom scenario");
+    opt.value = "custom";
+    $("scenario").append(opt);
+    rubricEditor(c.outcomes);
+    scenarioSelected();
+    ready = health.status === "ready";
+    $("connection").textContent = ready
+      ? "AI configured · free allowance"
+      : "Cloudflare setup needed";
+    setBusy(false);
+    if (!ready)
+      notify(
+        "Deploy the app to Cloudflare with the supplied configuration to enable the AI.",
+        true,
+      );
+    const previous = storage.get("advisorPracticeSession");
+    if (previous && /^[0-9a-f]{64}$/.test(previous)) {
+      try {
+        adopt(await api("/api/sessions/" + previous));
+        notify("Your saved attempt has been restored.");
+      } catch (e) {
+        storage.remove("advisorPracticeSession");
+        notify(e.message, true);
+      }
+    }
+  } catch (e) {
+    $("connection").textContent = "Service unavailable";
+    notify(e.message, true);
+  }
+}
+setInterval(tick, 1000);
+document.addEventListener("visibilitychange", async () => {
+  if (!document.hidden && session && !busy && session.phase !== "assessed") {
+    try {
+      adopt(await api(sessionPath()));
+    } catch (e) {
+      notify(e.message, true);
+    }
+  }
+});
+init();
