@@ -11,9 +11,15 @@
   },
   "ai": { "binding": "AI" },
   "durable_objects": {
-    "bindings": [{ "name": "SESSIONS", "class_name": "TrainingSession" }],
+    "bindings": [
+      { "name": "SESSIONS", "class_name": "TrainingSession" },
+      { "name": "MANAGEMENT", "class_name": "ManagementRegistry" },
+    ],
   },
-  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["TrainingSession"] }],
+  "migrations": [
+    { "tag": "v1", "new_sqlite_classes": ["TrainingSession"] },
+    { "tag": "v2", "new_sqlite_classes": ["ManagementRegistry"] },
+  ],
   "ratelimits": [
     {
       "name": "LIMITER",

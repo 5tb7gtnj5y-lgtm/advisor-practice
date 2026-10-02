@@ -100,6 +100,17 @@ function scenarioSelected() {
     ["category", "category"],
   ])
     $(id).textContent = s[key];
+  if (catalog.managed && s.id) {
+    $("level").value = s.level;
+    if (![...$("minutes").options].some((o) => Number(o.value) === s.minutes)) {
+      const opt = el("option", s.minutes + " minutes");
+      opt.value = s.minutes;
+      $("minutes").append(opt);
+    }
+    $("minutes").value = s.minutes;
+    $("passMark").value = s.passMark;
+    rubricEditor(s.outcomes || catalog.outcomes);
+  }
   $("previewInitials").textContent = initials(s.customer);
 }
 function rubricValues() {
@@ -108,6 +119,7 @@ function rubricValues() {
     description: row.querySelector('[data-field="description"]').value,
     weight: Number(row.querySelector('[data-field="weight"]').value),
     essential: row.querySelector('[data-field="essential"]').checked,
+    minScore: Number(row.dataset.minScore ?? 2),
   }));
 }
 function previewOutcomes() {
@@ -137,6 +149,7 @@ function addOutcome(
     return;
   }
   const row = el("div", undefined, "rubric-row");
+  row.dataset.minScore = o.minScore ?? 2;
   for (const [field, title, type] of [
     ["title", "Outcome title", "text"],
     ["weight", "Weight", "number"],
@@ -170,7 +183,7 @@ function addOutcome(
   check.dataset.field = "essential";
   check.checked = o.essential;
   check.addEventListener("change", previewOutcomes);
-  lab.append(check, document.createTextNode("Essential (minimum 2/4)"));
+  lab.append(check, document.createTextNode("Essential"));
   row.append(lab);
   const del = el("button", "Remove", "quiet danger");
   del.type = "button";
@@ -413,7 +426,7 @@ function renderReport() {
   $("passRule").textContent =
     "Pass mark: " +
     r.passMark +
-    "%. Each essential outcome must score at least 2/4. Scores are weighted and calculated by the server.";
+    "%. Essential outcomes must meet their configured minimum. Scores are weighted and calculated by the server.";
   $("essentialGaps").hidden = !r.essentialGaps.length;
   $("essentialGaps").textContent =
     "Essential outcomes to improve: " + r.essentialGaps.join("; ");
@@ -491,7 +504,7 @@ function reportText() {
     r.percent +
     "%\nPass mark: " +
     r.passMark +
-    "%\nEssential outcomes require 2/4\n\n" +
+    "%\nEssential outcomes must meet their configured minimum\n\n" +
     r.summary +
     "\n";
   for (const o of r.outcomes)
@@ -700,19 +713,35 @@ async function init() {
       opt.value = s.id;
       $("scenario").append(opt);
     }
-    const opt = el("option", "Custom scenario");
-    opt.value = "custom";
-    $("scenario").append(opt);
+    if (!c.managed) {
+      const opt = el("option", "Custom scenario");
+      opt.value = "custom";
+      $("scenario").append(opt);
+    } else {
+      document.querySelector(".trainer").hidden = true;
+      for (const id of ["passMark", "level", "minutes"]) $(id).disabled = true;
+      document.getElementById("retentionNotice").textContent =
+        `Use fictional details only. Unfinished attempts expire after 24 hours. Completed assessments and transcripts are available to managers for ${c.retentionDays} days. Names are self-entered and unverified. Your messages are sent to Cloudflare AI.`;
+    }
     rubricEditor(c.outcomes);
     scenarioSelected();
-    ready = health.status === "ready";
-    $("connection").textContent = ready
-      ? "AI configured · free allowance"
-      : "Cloudflare setup needed";
+    ready = health.status === "ready" && c.scenarios.length > 0;
+    $("connection").textContent = !c.scenarios.length
+      ? "No available scenarios"
+      : ready
+        ? "AI configured · free allowance"
+        : "Cloudflare setup needed";
     setBusy(false);
+    if (!c.scenarios.length) {
+      $("scenarioTitle").textContent = "No practice scenarios are available";
+      $("scenarioBrief").textContent =
+        "A manager needs to publish and switch on a scenario. Refresh this page afterwards.";
+    }
     if (!ready)
       notify(
-        "Deploy the app to Cloudflare with the supplied configuration to enable the AI.",
+        !c.scenarios.length
+          ? "A manager needs to publish an available scenario before you can start."
+          : "Deploy the app to Cloudflare with the supplied configuration to enable the AI.",
         true,
       );
     const previous = storage.get("advisorPracticeSession");

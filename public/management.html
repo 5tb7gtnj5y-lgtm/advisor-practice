@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="en-GB">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Management · Advisor Practice</title>
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="/style.css" />
+    <script src="/management.js" defer></script>
+  </head>
+  <body>
+    <header>
+      <div class="brand">
+        <span class="brand-icon">ap</span>
+        <div><strong>Advisor Practice</strong><span>Management Area</span></div>
+      </div>
+      <div class="button-row">
+        <a href="/">Trainee practice</a
+        ><button id="logout" hidden>Sign out</button>
+      </div>
+    </header>
+    <main>
+      <div id="status" class="notice" role="status" hidden></div>
+      <section id="signin" class="panel">
+        <h1>Manager sign-in</h1>
+        <p id="intro">Sign in to manage training.</p>
+        <form id="loginForm">
+          <label
+            >Username<input
+              id="username"
+              required
+              autocomplete="username"
+              maxlength="80" /></label
+          ><label
+            >Password<input
+              id="password"
+              type="password"
+              required
+              autocomplete="current-password"
+              maxlength="200" /></label
+          ><label id="setupLabel" hidden
+            >One-time setup key<input
+              id="setupKey"
+              type="password"
+              autocomplete="off" /></label
+          ><button class="primary" id="signIn">Sign in</button>
+        </form>
+        <details>
+          <summary>Recover administrator access</summary>
+          <p>
+            The Cloudflare account owner must create a new MANAGER_RECOVERY_KEY
+            secret. Each recovery key can be used once.
+          </p>
+          <form id="recoveryForm">
+            <label
+              >Administrator username<input
+                id="recoveryUsername"
+                required
+                autocomplete="username" /></label
+            ><label
+              >New password<input
+                id="recoveryPassword"
+                type="password"
+                minlength="14"
+                maxlength="200"
+                required
+                autocomplete="new-password" /></label
+            ><label
+              >Recovery key<input
+                id="recoveryKey"
+                type="password"
+                required
+                autocomplete="off" /></label
+            ><button>Recover access</button>
+          </form>
+        </details>
+      </section>
+      <section id="workspace" hidden>
+        <div class="page-title">
+          <div>
+            <h1>Manage your training</h1>
+            <p id="who"></p>
+          </div>
+        </div>
+        <nav class="button-row">
+          <button data-tab="library">Scenario Library</button
+          ><button data-tab="results">Results</button
+          ><button data-tab="admin" id="adminNav" hidden>
+            Accounts & settings</button
+          ><button data-tab="audit">Recent activity</button>
+        </nav>
+        <section id="library" class="panel">
+          <div class="section-heading">
+            <h2>Scenario Library</h2>
+            <button id="create" class="primary">Create Scenario</button>
+          </div>
+          <label
+            >Describe the practice you want<textarea
+              id="description"
+              rows="3"
+              maxlength="3000"
+              placeholder="Create a difficult scenario with an angry customer about a £600 fuel bill who has contacted us twice."
+            ></textarea></label
+          ><button id="generate">Generate Scenario with AI</button>
+          <p class="small-note">
+            Generated guidance needs your review and approval. AI uses the
+            existing free allowance.
+          </p>
+          <div id="scenarioList"></div>
+        </section>
+        <section id="editor" class="panel" hidden>
+          <h2 id="editHeading">Edit scenario</h2>
+          <p id="generatedNotice" class="notice" hidden></p>
+          <form id="scenarioForm">
+            <div id="fields" class="custom-grid"></div>
+            <div class="custom-grid">
+              <label
+                >Difficulty<select id="editLevel">
+                  <option value="foundation">Foundation</option>
+                  <option value="intermediate">Intermediate</option>
+                  <option value="advanced">Advanced</option>
+                </select></label
+              ><label
+                >Time limit in minutes (0 = untimed)<input
+                  id="editMinutes"
+                  type="number"
+                  min="0"
+                  max="60"
+                  value="10"
+                  required /></label
+              ><label
+                >Pass mark (%)<input
+                  id="editPass"
+                  type="number"
+                  min="1"
+                  max="100"
+                  value="70"
+                  required
+              /></label>
+            </div>
+            <h3>Assessment criteria</h3>
+            <p>
+              Scores are 0–4. Weight sets each criterion’s contribution.
+              Essential criteria must reach the selected minimum.
+            </p>
+            <div id="criteria"></div>
+            <button type="button" id="addCriterion">Add criterion</button>
+            <div class="button-row">
+              <button type="submit" class="primary">Save draft</button
+              ><button type="button" id="publish" class="primary">
+                Publish</button
+              ><button type="button" id="test">Test</button
+              ><button type="button" id="cancel">Close</button>
+            </div>
+          </form>
+        </section>
+        <section id="results" class="panel" hidden>
+          <h2>Completed assessments</h2>
+          <p class="small-note">
+            Trainee names are self-entered and are not verified identities. AI
+            marks are provisional.
+          </p>
+          <form id="filterForm">
+            <label
+              >Search trainee, scenario, difficulty or outcome<input
+                id="search" /></label
+            ><label class="check"
+              ><input id="includeTests" type="checkbox" />Include manager
+              tests</label
+            ><button>Search</button>
+          </form>
+          <div id="resultsList"></div>
+          <div class="button-row">
+            <button id="prev">Previous</button><span id="resultCount"></span
+            ><button id="next">Next</button>
+          </div>
+          <article id="resultDetail" hidden>
+            <h3 id="resultTitle"></h3>
+            <button id="exportResult">Download assessment & transcript</button>
+            <div id="resultBody"></div>
+            <h3>Manager review</h3>
+            <form id="reviewForm">
+              <label
+                >Final decision<select id="finalDecision">
+                  <option>Awaiting review</option>
+                  <option>Pass</option>
+                  <option>Needs more practice</option>
+                  <option>Reassessment required</option>
+                </select></label
+              >
+              <div id="reviewScores"></div>
+              <label
+                >Review reasoning and coaching points<textarea
+                  id="reviewNotes"
+                  rows="4"
+                  maxlength="5000"
+                ></textarea></label
+              ><button class="primary">Save review</button>
+            </form>
+            <p id="reviewAt"></p>
+          </article>
+        </section>
+        <section id="admin" class="panel" hidden>
+          <h2>Accounts & retention</h2>
+          <p>
+            Create manager accounts here. Managers can manage scenarios and
+            results; only the administrator can manage accounts and retention.
+          </p>
+          <form id="accountForm">
+            <label
+              >Manager username<input
+                id="accountName"
+                required
+                minlength="3"
+                maxlength="80" /></label
+            ><label
+              >New password (at least 14 characters)<input
+                id="accountPassword"
+                type="password"
+                autocomplete="new-password"
+                maxlength="200" /></label
+            ><label class="check"
+              ><input id="accountDisabled" type="checkbox" />Disable account and
+              revoke access</label
+            ><button>Save account</button>
+          </form>
+          <div id="accountsList"></div>
+          <form id="retentionForm">
+            <label
+              >Completed assessment retention (days)<input
+                id="retention"
+                type="number"
+                min="1"
+                max="365"
+                required /></label
+            ><button>Save retention</button>
+          </form>
+          <p>
+            Changes apply to new completed assessments. Unfinished attempts
+            expire after 24 hours. Manager tests expire after one day. Activity
+            records expire after 90 days. Download results you need to keep.
+          </p>
+        </section>
+        <section id="audit" class="panel" hidden>
+          <h2>Recent management activity</h2>
+          <div id="auditList"></div>
+        </section>
+      </section>
+    </main>
+    <footer>Fictional training. Use invented customer details.</footer>
+  </body>
+</html>

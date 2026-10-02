@@ -9,6 +9,19 @@ export function memoryContext() {
       async put(k, v) {
         values.set(k, structuredClone(v));
       },
+      async delete(k) {
+        values.delete(k);
+      },
+      async list({ prefix = "" } = {}) {
+        return new Map(
+          [...values]
+            .filter(([k]) => k.startsWith(prefix))
+            .map(([k, v]) => [k, structuredClone(v)]),
+        );
+      },
+      async transaction(fn) {
+        return fn(this);
+      },
       async deleteAll() {
         values.clear();
       },

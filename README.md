@@ -253,3 +253,11 @@ Checked on 1 October 2026:
 - Workers AI free allowance: https://developers.cloudflare.com/workers-ai/platform/pricing/
 - SQLite Durable Objects on the Free plan: https://developers.cloudflare.com/durable-objects/platform/pricing/
 - Structured assessment output: https://developers.cloudflare.com/workers-ai/features/json-mode/
+
+## Version 2: Management Area
+
+Use the **Management Area** link to manage persistent scenarios, generate AI drafts, publish immediately, set per-scenario timers/difficulty/rubrics/pass rules, test drafts, review saved assessments/transcripts/evidence, and record manager scores and coaching. Managers are authenticated; administrators manage accounts and retention. Published training settings are enforced by the server.
+
+Deploy the complete `wrangler.jsonc` to add `ManagementRegistry` storage and its v2 migration. Set the `MANAGER_SETUP_KEY` secret once to create the initial administrator, then remove it. See the Management Area update section of [installation-guide.md](installation-guide.md) for simple activation, everyday use, retention and account recovery.
+
+Completed management assessments default to 30-day retention; attempt-token access still expires after 24 hours. No paid AI API is introduced. AI and storage free-plan quotas still apply.

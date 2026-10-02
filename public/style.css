@@ -755,3 +755,45 @@ dialog li {
     display: none !important;
   }
 }
+/* Manager controls follow the existing trainee design. */
+.outcome-editor {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.7rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+.outcome-editor label:nth-child(2) {
+  grid-column: 1 / -1;
+}
+.outcome-editor input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+}
+#workspace nav {
+  margin-bottom: 1.5rem;
+}
+#scenarioList,
+#resultsList {
+  margin-top: 1.5rem;
+}
+#signin {
+  max-width: 620px;
+  margin: 2rem auto;
+}
+#resultBody blockquote {
+  border-left: 3px solid var(--line);
+  padding-left: 1rem;
+  white-space: pre-wrap;
+}
+#resultBody details p {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 700px) {
+  .outcome-editor {
+    grid-template-columns: 1fr;
+  }
+}

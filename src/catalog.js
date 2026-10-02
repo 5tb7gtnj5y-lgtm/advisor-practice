@@ -129,6 +129,16 @@ export const levels = {
     "Frustrated or anxious customer with the barriers in your profile. Challenge vague assurances, ask a plausible follow-up, and reveal hidden facts only when explored. Remain realistic and civil; good empathy and a workable plan reduce frustration.",
 };
 export function publicScenario(s) {
-  const { facts, ...visible } = s;
+  const {
+    facts,
+    background,
+    personality,
+    emotionalState,
+    hiddenInformation,
+    concerns,
+    complications,
+    desiredOutcome,
+    ...visible
+  } = s;
   return visible;
 }

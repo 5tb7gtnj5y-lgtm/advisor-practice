@@ -24,6 +24,7 @@
         </div>
       </div>
       <div class="header-right">
+        <a href="/management.html">Management Area</a>
         <span id="connection">Checking service…</span
         ><button class="quiet" id="helpButton" type="button">How to use</button>
       </div>
@@ -81,12 +82,12 @@
               required
             />
             <div class="small-note">
-              Essential outcomes must also score at least 2 out of 4.
+              Essential outcomes must also meet the manager’s minimum score.
             </div>
             <button class="primary full" id="start" type="submit" disabled>
               Start conversation
             </button>
-            <p class="small-note">
+            <p class="small-note" id="retentionNotice">
               Use fictional details only. Your attempt is retained for 24 hours.
               Download your report before it expires.
             </p>
@@ -387,8 +388,8 @@
       </p>
       <p>
         Your messages are sent to Cloudflare’s AI service. Use invented names
-        and identifiers. This practice app does not verify learner identity or
-        lock trainer settings.
+        and identifiers. This practice app does not verify learner identity.
+        Managers control published training scenarios and scoring.
       </p>
     </dialog>
   </body>
