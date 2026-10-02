@@ -18,16 +18,39 @@ function notice(message, error = false) {
   $("status").textContent = message;
   $("status").classList.toggle("error", error);
 }
-async function api(path, method = "GET", value) {
-  const r = await fetch("/api/management/" + path, {
-    method,
-    headers: {
-      "Content-Type": "application/json",
-      ...(csrf ? { "X-CSRF-Token": csrf } : {}),
-    },
-    ...(value === undefined ? {} : { body: JSON.stringify(value) }),
-  });
-  const d = await r.json();
+async function api(path, method = "GET", value, timeoutMs = 30000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  let r;
+  try {
+    r = await fetch("/api/management/" + path, {
+      method,
+      headers: {
+        "Content-Type": "application/json",
+        ...(csrf ? { "X-CSRF-Token": csrf } : {}),
+      },
+      signal: controller.signal,
+      ...(value === undefined ? {} : { body: JSON.stringify(value) }),
+    });
+  } catch (e) {
+    if (e?.name === "AbortError")
+      throw new Error(
+        "The request took too long. Your description is still here—try again.",
+      );
+    throw new Error(
+      "Windows could not reach the service. Check the connection, refresh the page and try again.",
+    );
+  } finally {
+    clearTimeout(timer);
+  }
+  let d;
+  try {
+    d = await r.json();
+  } catch {
+    throw new Error(
+      "The service returned an unexpected response. Refresh the page and try again.",
+    );
+  }
   if (!r.ok) {
     if (r.status === 401 && user) {
       user = null;
@@ -292,17 +315,44 @@ $("test").onclick = () =>
   action(async () => {
     if ($("scenarioForm").reportValidity()) await testScenario(formValue());
   });
-$("generate").onclick = () =>
+$("generatorForm").onsubmit = (e) => {
+  e.preventDefault();
   action(async () => {
+    const generate = $("generate"),
+      generatorStatus = $("generatorStatus"),
+      originalLabel = generate.textContent,
+      description = $("description").value.trim();
+    if (!description) {
+      $("description").focus();
+      generatorStatus.textContent = "Describe the practice you want first.";
+      return;
+    }
+    generate.disabled = true;
+    generate.textContent = "Generating…";
+    generatorStatus.textContent =
+      "Creating the customer, hidden facts and assessment criteria. This can take up to two minutes.";
     notice("Generating scenario…");
-    const s = await api("generate", "POST", {
-      description: $("description").value,
-    });
-    edit(s);
-    notice(
-      "Generated draft. Review the guidance, hidden facts and assessment criteria before publishing.",
-    );
+    try {
+      const s = await api(
+        "generate",
+        "POST",
+        { description },
+        120000,
+      );
+      generatorStatus.textContent = "Scenario created as a draft.";
+      edit(s);
+      notice(
+        "Generated draft. Review the guidance, hidden facts and assessment criteria before publishing.",
+      );
+    } catch (error) {
+      generatorStatus.textContent = error.message;
+      throw error;
+    } finally {
+      generate.disabled = false;
+      generate.textContent = originalLabel;
+    }
   });
+};
 async function loadResults() {
   const d = await api(
     `results?q=${encodeURIComponent($("search").value)}&tests=${$("includeTests").checked ? "1" : "0"}&offset=${offset}`,

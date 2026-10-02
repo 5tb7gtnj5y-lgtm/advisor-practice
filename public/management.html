@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Management · Advisor Practice</title>
     <link rel="icon" href="data:," />
-    <link rel="stylesheet" href="/style.css" />
-    <script src="/management.js" defer></script>
+    <link rel="stylesheet" href="/style.css?v=20261002-4" />
+    <script src="/management.js?v=20261002-4" defer></script>
   </head>
   <body>
     <header>
@@ -94,18 +94,23 @@
             <h2>Scenario Library</h2>
             <button id="create" class="primary">Create Scenario</button>
           </div>
-          <label
-            >Describe the practice you want<textarea
-              id="description"
-              rows="3"
-              maxlength="3000"
-              placeholder="Create a difficult scenario with an angry customer about a £600 fuel bill who has contacted us twice."
-            ></textarea></label
-          ><button id="generate">Generate Scenario with AI</button>
-          <p class="small-note">
-            Generated guidance needs your review and approval. AI uses the
-            existing free allowance.
-          </p>
+          <form id="generatorForm">
+            <label
+              >Describe the practice you want<textarea
+                id="description"
+                rows="3"
+                maxlength="3000"
+                required
+                placeholder="Create a difficult scenario with an angry customer about a £600 fuel bill who has contacted us twice."
+              ></textarea></label
+            ><button id="generate" type="submit">
+              Generate Scenario with AI
+            </button>
+            <p id="generatorStatus" class="small-note" role="status" aria-live="polite">
+              Generated guidance needs your review and approval. AI uses the
+              existing free allowance.
+            </p>
+          </form>
           <div id="scenarioList"></div>
         </section>
         <section id="editor" class="panel" hidden>
