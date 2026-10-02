@@ -138,6 +138,10 @@ header {
   align-items: center;
   font-size: 0.85rem;
 }
+header .header-right a,
+header .header-right a:visited {
+  color: #fff;
+}
 header .quiet {
   color: white;
   border-color: #5e7292;
