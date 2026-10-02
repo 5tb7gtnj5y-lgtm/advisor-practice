@@ -172,7 +172,7 @@ test("draft and hidden customer fields are excluded from catalog; publication is
   assert.ok(!JSON.stringify(catalog).includes("SECRET"));
   assert.ok(!JSON.stringify(catalog).includes("PRIVATE-PERSONALITY"));
 });
-test("trainee overrides cannot change managed scenario, rubric, level or timer", async () => {
+test("practice settings change difficulty and timer while protecting managed assessment", async () => {
   const f = fixture(),
     auth = await setup(f),
     s = await scenario(f, auth, { status: "published", enabled: true });
@@ -189,12 +189,19 @@ test("trainee overrides cannot change managed scenario, rubric, level or timer",
   );
   assert.equal(r.status, 201);
   const session = await r.json();
-  assert.equal(session.config.minutes, 7);
-  assert.equal(session.config.level, "advanced");
+  assert.equal(session.config.minutes, 0);
+  assert.equal(session.config.level, "foundation");
+  assert.equal(session.config.passMark, s.passMark);
+  assert.equal(session.config.scenario.title, s.title);
   assert.equal(session.config.outcomes[0].minScore, 3);
   assert.ok(!JSON.stringify(session).includes("SECRET"));
   assert.ok(!JSON.stringify(session).includes("PRIVATE-PERSONALITY"));
   assert.equal(session.reviewFacts, null);
+  const invalid = await worker.fetch(
+    request("/api/sessions", "POST", { scenarioId: s.id, minutes: 61 }),
+    f.env,
+  );
+  assert.equal(invalid.status, 400);
 });
 test("new attempts reject disabled scenarios while existing snapshots survive edits", async () => {
   const f = fixture(),

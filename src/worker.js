@@ -515,6 +515,8 @@ export default {
             const scenario = await selected.json();
             config = cleanConfig({
               ...scenario,
+              level: input.level ?? scenario.level,
+              minutes: input.minutes ?? scenario.minutes,
               advisor: input.advisor,
               customScenario: scenario,
             });

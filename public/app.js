@@ -719,7 +719,13 @@ async function init() {
       $("scenario").append(opt);
     } else {
       document.querySelector(".trainer").hidden = true;
-      for (const id of ["passMark", "level", "minutes"]) $(id).disabled = true;
+      $("passMark").readOnly = true;
+      $("passMarkNote").replaceChildren(
+        document.createTextNode("Pass mark and essential outcomes are set by the manager. To change them, "),
+      );
+      const managementLink = el("a", "open the Management Area");
+      managementLink.href = "/management";
+      $("passMarkNote").append(managementLink, document.createTextNode(" and edit this scenario."));
       document.getElementById("retentionNotice").textContent =
         `Use fictional details only. Unfinished attempts expire after 24 hours. Completed assessments and transcripts are available to managers for ${c.retentionDays} days. Names are self-entered and unverified. Your messages are sent to Cloudflare AI.`;
     }
