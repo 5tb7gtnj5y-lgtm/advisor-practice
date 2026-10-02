@@ -385,3 +385,40 @@ test("essential minimum configured by manager blocks pass independently of total
   assert.equal(r.percent, 75);
   assert.equal(r.decision, "Needs more practice");
 });
+
+test("long manager scenarios with ten criteria can create attempts", async () => {
+  const f = fixture(),
+    auth = await setup(f);
+  const extra = {
+    status: "published",
+    enabled: true,
+    guidance: "g".repeat(5000),
+    brief: "b".repeat(1400),
+    facts: "f".repeat(2500),
+    outcomes: Array.from({ length: 10 }, (_, i) => ({
+      title: "Criterion " + i,
+      description: "d".repeat(1000),
+      weight: 10,
+    })),
+    ...Object.fromEntries(
+      [
+        "background",
+        "personality",
+        "emotionalState",
+        "hiddenInformation",
+        "concerns",
+        "complications",
+        "desiredOutcome",
+      ].map((k) => [k, "x".repeat(2500)]),
+    ),
+  };
+  const s = await scenario(f, auth, extra);
+  const response = await worker.fetch(
+    request("/api/sessions", "POST", { scenarioId: s.id }),
+    f.env,
+  );
+  assert.equal(response.status, 201);
+  const attempt = await response.json();
+  assert.equal(attempt.config.outcomes.length, 10);
+  assert.ok(!JSON.stringify(attempt).includes("x".repeat(100)));
+});

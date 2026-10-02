@@ -26,11 +26,12 @@ class HttpError extends Error {
 }
 const bounded = (v, max, fallback = "") =>
   typeof v === "string" ? v.trim().slice(0, max) : fallback;
-async function body(req) {
+async function body(req, maxLength = 24000) {
   if (!req.headers.get("content-type")?.includes("application/json"))
     throw new HttpError("Send JSON data.");
   const txt = await req.text();
-  if (txt.length > 24000) throw new HttpError("The request is too large.", 413);
+  if (txt.length > maxLength)
+    throw new HttpError("The request is too large.", 413);
   try {
     return JSON.parse(txt);
   } catch {
@@ -266,7 +267,7 @@ export class TrainingSession {
     let s = await this.ctx.storage.get("session");
     if (route === "/create" && req.method === "POST") {
       if (s) throw new HttpError("Session already exists.", 409);
-      const data = await body(req);
+      const data = await body(req, 70000);
       const config = data.config;
       const now = Date.now();
       s = {

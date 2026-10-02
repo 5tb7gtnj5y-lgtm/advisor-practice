@@ -16,7 +16,7 @@ AI score interpretation, conversational realism and adherence to a custom proces
 
 ## Management update verification
 
-Run `npm test` for 35 tests covering the existing chatbot and manager permissions, CSRF, single-use setup/recovery, cookie revocation, scenario publication, hidden data filtering, managed scoring, snapshot isolation, result review, drafts/tests, and retention. AI calls are mocked in these tests.
+Run `npm test` for 36 tests covering the existing chatbot and manager permissions, CSRF, single-use setup/recovery, cookie revocation, scenario publication, hidden data filtering, managed scoring, snapshot isolation, result review, drafts/tests, and retention. AI calls are mocked in these tests.
 
 Run `npm run test:runtime` to check real workerd Web Crypto and SQLite Durable Object persistence. It creates isolated temporary test data and does not invoke AI. It verifies setup, publication, catalog filtering, server-controlled settings, empty assessment, and atomic result/transcript storage.
 
