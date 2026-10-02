@@ -150,3 +150,7 @@ If your Worker currently uses manual dashboard deployments and has no GitHub Bui
 ### Checks before real training
 
 Run `npm test`, `npm run check`, and `npx wrangler deploy --dry-run`. Then deploy and check a real AI-generated draft, manager test conversation, trainee conversation, completed assessment and manager review. Unit tests use mocked AI; passing them does not prove live Cloudflare inference works. AI scores require trainer review.
+
+### If Cloudflare shows a disconnected GitHub connection
+
+Open **advisor-practice → Settings → Builds → Manage**. Confirm access in GitHub, then ensure the **Cloudflare Workers and Pages** app includes the **advisor-practice** repository. Save the repository access settings. Return to Cloudflare and refresh **Settings → Builds** to check that the disconnected warning has cleared. A new commit to `main` then triggers a fresh build using the connected repository. Open **Deployments** to follow the build and inspect any failure log.
