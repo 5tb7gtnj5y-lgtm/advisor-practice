@@ -10,8 +10,9 @@
     />
     <title>Advisor Practice</title>
     <link rel="icon" href="data:," />
-    <link rel="stylesheet" href="/style.css" />
-    <script src="/app.js" defer></script>
+    <link rel="stylesheet" href="/style.css?v=voice-20261002-1" />
+    <script src="/voice.js?v=voice-20261002-1" defer></script>
+    <script src="/app.js?v=voice-20261002-1" defer></script>
   </head>
   <body>
     <a class="skip" href="#main">Skip to content</a>
@@ -235,6 +236,22 @@
               aria-relevant="additions"
             ></div>
             <p class="chat-status" id="chatStatus" role="status"></p>
+            <section class="voice-controls" aria-labelledby="voiceHeading">
+              <h2 id="voiceHeading">Voice practice (optional)</h2>
+              <div class="button-row">
+                <button id="voiceTalk" class="secondary" type="button" aria-pressed="false" disabled>Talk</button>
+                <button id="voiceMute" class="secondary" type="button" aria-pressed="false" disabled>Enable spoken replies</button>
+                <button id="voiceReplay" class="quiet" type="button" disabled>Replay customer</button>
+                <button id="voiceStop" class="quiet" type="button" disabled>Stop speaking</button>
+              </div>
+              <label for="voiceChoice">Customer voice</label>
+              <select id="voiceChoice" disabled><option value="">Automatic English voice</option></select>
+              <p id="voiceStatus" class="small-note" role="status" aria-live="polite">Loading optional voice controls… you can still type.</p>
+              <details class="voice-privacy">
+                <summary>Voice privacy and assessment</summary>
+                <p class="small-note">Your browser may send microphone audio to its speech provider. This website does not save recordings. Check the transcription before sending. Only the text you send enters the transcript and assessment; tone, accent and pronunciation are not scored. Use fictional details. Microphone access starts only when you press Talk.</p>
+              </details>
+            </section>
             <form id="messageForm" class="composer">
               <label for="message">Your reply as the advisor</label
               ><textarea
@@ -372,6 +389,7 @@
         <li>
           Select <strong>Start conversation</strong> and respond as the advisor.
         </li>
+        <li>For voice practice, select <strong>Enable spoken replies</strong>, then <strong>Talk</strong>. Allow microphone access, speak, check the text and select <strong>Send reply</strong>. Typing always works. Use <strong>Mute customer</strong> to turn sound off.</li>
         <li>
           Select <strong>End & assess</strong>, or let the timer end the
           conversation.

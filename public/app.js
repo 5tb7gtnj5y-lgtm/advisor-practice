@@ -66,6 +66,11 @@ const post = (path, data = {}) =>
   api(path, { method: "POST", body: JSON.stringify(data) });
 const sessionPath = (suffix) =>
   "/api/sessions/" + session.id + (suffix ? "/" + suffix : "");
+const voice = window.AdvisorPracticeVoice?.createControls({
+  document,
+  messageInput: $("message"),
+  sendButton: $("send"),
+});
 function show(view) {
   for (const id of ["setup", "session", "report"]) $(id).hidden = id !== view;
 }
@@ -294,6 +299,7 @@ function setBusy(value, label = "") {
   $("finish").disabled = value;
   $("retryAssessment").disabled = value;
   $("chatStatus").textContent = label;
+  voice?.setBusy(value);
 }
 function renderMessage(m, target) {
   const item = el(
@@ -314,6 +320,7 @@ function renderMessage(m, target) {
 function adopt(s) {
   const changed = !session || session.id !== s.id;
   session = s;
+  voice?.updateSession(s);
   clockOffset = s.serverNow - Date.now();
   storage.set("advisorPracticeSession", s.id);
   if (changed) {
@@ -394,6 +401,7 @@ function tick() {
 }
 async function assess() {
   if (!session || busy) return;
+  voice?.stop();
   notify("");
   setBusy(true, "Assessing the conversation… This may take a minute.");
   try {
@@ -573,6 +581,10 @@ $("setupForm").addEventListener("submit", async (e) => {
 $("messageForm").addEventListener("submit", async (e) => {
   e.preventDefault();
   if (busy || !session || session.phase !== "active") return;
+  if (voice?.isListening()) {
+    notify("Stop listening, check your words, then press Send reply.");
+    return;
+  }
   const content = $("message").value.trim();
   if (!content) return;
   if (session.deadline && Date.now() + clockOffset >= session.deadline) {
@@ -675,6 +687,8 @@ $("printReport").addEventListener("click", () => {
   window.print();
 });
 $("newSession").addEventListener("click", () => {
+  voice?.reset();
+  $("message").value = "";
   storage.remove("advisorPracticeSession");
   session = null;
   autoAttempt = false;
@@ -767,6 +781,7 @@ async function init() {
 }
 setInterval(tick, 1000);
 document.addEventListener("visibilitychange", async () => {
+  if (document.hidden) voice?.stop();
   if (!document.hidden && session && !busy && session.phase !== "assessed") {
     try {
       adopt(await api(sessionPath()));
@@ -775,4 +790,5 @@ document.addEventListener("visibilitychange", async () => {
     }
   }
 });
+window.addEventListener("pagehide", () => voice?.stop());
 init();

@@ -362,6 +362,37 @@ details[open] > summary {
   align-items: center;
   gap: 0.6rem;
 }
+.voice-controls {
+  padding: 1rem;
+  margin: 0.75rem 0;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: #f6f9ff;
+}
+.voice-controls h2 {
+  font-size: 1rem;
+  margin-bottom: 0.75rem;
+}
+.voice-controls label {
+  margin-top: 0.75rem;
+}
+.voice-controls select {
+  max-width: 100%;
+}
+.voice-controls button[aria-pressed="true"] {
+  border-color: var(--blue);
+}
+#voiceTalk[aria-pressed="true"] {
+  background: var(--blue);
+  color: white;
+}
+.voice-error {
+  color: #8a2334;
+}
+.voice-privacy {
+  margin-top: 0.65rem;
+  font-size: 0.85rem;
+}
 .file-button {
   font-weight: 600;
   border-radius: 8px;

@@ -23,3 +23,15 @@ Run `npm run test:runtime` to check real workerd Web Crypto and SQLite Durable O
 The deployment dry run and both test suites passed during this update. Browser access to the local development server was blocked in the execution environment, so visual browser checks and live Cloudflare AI inference remain to be checked after deployment.
 
 Production acceptance: add the one-time setup secret, deploy the full configuration, create the administrator, generate/review/publish a draft, send real advisor replies, get an assessment, and open its evidence/transcript in Management Area. Check logout and disabled-account rejection. Stay on the Free plan.
+
+## Optional voice update — 2 October 2026
+
+The test suite now includes 19 browser-speech tests plus the existing 36 training/management tests. `npm test` checks opt-in capture, standard/prefixed recognition, interim/final text without duplication, permission/network errors and retries, capture bounds, unsupported-browser fallback, cancellation/late callbacks, speech chunking and voice selection, mute/replay, blocked autoplay, request-busy/session lifecycle, opening turn zero, and dictated-text integration with the existing Worker and evidence transcript.
+
+These speech tests use fake browser speech APIs and explicit mock AI. They do not establish that a real microphone, operating-system voice or employer network works on a particular device. Actual Windows/iPhone microphone and speaker acceptance remains a user-device check.
+
+Pre-deployment checks passed: all 55 automated tests, JavaScript syntax, Wrangler deployment dry run, and real workerd Web Crypto/SQLite persistence smoke test. The runtime smoke test's old forced-timer assertion was corrected to cover the existing trainee-selectable timer/difficulty while preserving the manager's pass mark; production server code was not changed.
+
+Voice adds only frontend assets and tests. Existing Worker routes, manager authentication, assessment code, Durable Objects, bindings and migrations are unchanged. A pre-voice code branch was saved before the update; it is not a database backup.
+
+Device acceptance: start a fictional attempt, enable spoken replies, dictate a reply, stop, correct a word, send, hear the customer's response, replay, mute, and finish an assessment. Verify the assessed transcript contains only the text that was sent. Deny microphone access and confirm typing still works. Check leaving the page stops capture/playback. The clock continues during dictation and playback.

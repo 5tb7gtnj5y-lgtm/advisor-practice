@@ -4,7 +4,7 @@ A customer role-play chatbot for HMRC-style and public-service advisor training.
 
 **No AI API key is needed.** This project uses Cloudflare's AI binding, rather than a paid API. Cloudflare provides a shared allowance of **10,000 neurons a day**. That is a measure of AI work, not a fixed number of conversations. On the Workers Free plan, AI stops when the allowance is exhausted. Do not upgrade to a Paid plan if you want to avoid usage charges. Other free Cloudflare resource limits also apply.
 
-**This package is ready to install, but it has not been deployed to your account.** Local checks cover the code, session lifecycle and screens using mock AI responses. The final live-AI check is step 12 below.
+**Already using Advisor Practice?** The optional voice update uses the existing GitHub/Cloudflare deployment. No new API key, secret, database migration or installation is needed. For a new installation, follow the steps below and complete the live-AI check in step 12.
 
 ## Install it — no coding or terminal needed
 
@@ -261,3 +261,23 @@ Use the **Management Area** link to manage persistent scenarios, generate AI dra
 Deploy the complete `wrangler.jsonc` to add `ManagementRegistry` storage and its v2 migration. Set the `MANAGER_SETUP_KEY` secret once to create the initial administrator, then remove it. See the Management Area update section of [installation-guide.md](installation-guide.md) for simple activation, everyday use, retention and account recovery.
 
 Completed management assessments default to 30-day retention; attempt-token access still expires after 24 hours. No paid AI API is introduced. AI and storage free-plan quotas still apply.
+
+## Optional voice practice
+
+1. Start a conversation as normal.
+2. Select **Enable spoken replies** to hear the AI customer's opening and subsequent replies. Sound is off until you choose it.
+3. Select **Talk**, allow the microphone if asked, and say your advisor reply. Select **Stop listening** when finished; the browser may also finish automatically after a pause.
+4. Check and edit the text in **Your reply**, then select **Send reply**. Dictation never sends anything automatically.
+5. Use **Replay customer**, **Stop speaking**, **Mute customer** or the **Customer voice** selector as needed. Selecting **Talk** stops customer playback before starting the microphone.
+
+This is turn-by-turn voice practice, not an always-listening telephone call. Listening stops on assessment, expiry, page hiding and navigation. Each capture is limited to 60 seconds; the existing 1,000-character reply limit still applies. Typing remains available independently of speech support.
+
+Voice uses the browser's speech recognition and text-to-speech, not a new paid AI service. Browser and workplace policies affect availability; try a browser with speech recognition support, or use keyboard dictation and normal typing. Your browser may send audio to its speech provider. The application does not save audio recordings. Only reviewed, sent text is stored and scored. Tone, accent and pronunciation are not assessed, and the selected voice does not guarantee emotional acting. Use fictional details.
+
+The existing Cloudflare AI still generates the customer's dynamic replies and assessments, with the same account limits. Voice does not change scenarios, hidden facts, scoring rules or result retention.
+
+## Pre-voice rollback point
+
+The GitHub branch **pre-voice-version** preserves the build immediately before voice, at commit **c3440cd80da701957010367f79290b7120df9926**. Restore its files in a new commit on `main`, keeping the current Git history; Cloudflare then deploys that commit through the existing integration. Do not force-reset `main` or remove Durable Object migrations.
+
+This is a code backup, not a database backup. A code rollback does not recover records deleted or expired later, and does not rewind management data or configuration changes. The voice update introduces no storage or schema changes.

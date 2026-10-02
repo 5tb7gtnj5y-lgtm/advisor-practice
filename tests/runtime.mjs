@@ -62,6 +62,8 @@ try {
     status: "published",
     enabled: true,
     minutes: 9,
+    level: "advanced",
+    passMark: 75,
   };
   delete scenario.id;
   delete scenario.version;
@@ -74,9 +76,14 @@ try {
     scenarioId: scenario.id,
     advisor: "Runtime trainee",
     minutes: 0,
+    level: "foundation",
+    passMark: 1,
   });
   assert.equal(attempt.status, 201, JSON.stringify(attempt));
-  assert.equal(attempt.data.config.minutes, 9);
+  assert.equal(attempt.data.config.minutes, 0);
+  assert.equal(attempt.data.deadline, null);
+  assert.equal(attempt.data.config.level, "foundation");
+  assert.equal(attempt.data.config.passMark, 75);
   const assessed = await call(
     "/api/sessions/" + attempt.data.id + "/assess",
     "POST",
