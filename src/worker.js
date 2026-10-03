@@ -1,4 +1,5 @@
 import { registry } from "./management.js";
+import { guidanceCoachAI } from "./guidance-ai.js";
 export { ManagementRegistry } from "./management.js";
 import { outcomes, scenarios, levels, publicScenario } from "./catalog.js";
 import {
@@ -450,6 +451,7 @@ export default {
     try {
       const url = new URL(req.url),
         path = url.pathname;
+      if (path === "/api/guidance-coach-ai") return guidanceCoachAI(req, env);
       if (path === "/api/health")
         return json({
           status: env.AI && env.SESSIONS ? "ready" : "setup-required",
