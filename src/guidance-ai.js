@@ -18,7 +18,8 @@ export async function guidanceCoachAI(req, env) {
     if(!env.AI) return json({error:"The AI coach is temporarily unavailable."},503);
     if(env.LIMITER&&!(await env.LIMITER.limit({key:"guidance-coach-service"})).success) return json({error:"The coach needs a short pause. Try again in a minute."},429);
     const result=await env.AI.run(env.AI_MODEL||"@cf/meta/llama-3.3-70b-instruct-fp8-fast",{messages:data.messages,max_tokens:1100,temperature:0.15,response_format:{type:"json_object"}});
-    const text=result?.response??result?.choices?.[0]?.message?.content;
+    const response=result?.response??result?.choices?.[0]?.message?.content??(result?.reply?result:null);
+    const text=typeof response==="string"?response:(response&&typeof response==="object"?JSON.stringify(response):"");
     if(typeof text!=="string"||!text.trim())return json({error:"The AI returned an incomplete reply. Please try again."},502);
     return json({response:text});
   }catch(error){
