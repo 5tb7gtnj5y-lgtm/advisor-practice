@@ -1,0 +1,155 @@
+/* Learner workspace. Management keeps its existing stylesheet and controls. */
+.practice-app {
+  --navy: #172b3a;
+  --blue: #0b6868;
+  --line: #dfe5e8;
+  --muted: #556773;
+  background: #f5f7f8;
+  color: var(--navy);
+}
+.practice-app header { padding: 0.8rem 2.5%; background: #172b3a; }
+.practice-app .brand-icon { background: #0b6868; border-radius: 50%; font-size: 1.3rem; }
+.practice-app main { max-width: 1440px; padding: 1.4rem 2.5% 3rem; }
+.practice-app h1 { font-size: clamp(1.6rem, 3vw, 2.25rem); letter-spacing: -0.04em; }
+.practice-app .eyebrow { color: #526977; letter-spacing: 0.12em; font-size: 0.7rem; }
+.practice-app .panel { border-radius: 12px; box-shadow: 0 2px 5px #172b3a04; }
+.practice-app .primary { background: #0b6868; }
+.practice-app .primary:hover { background: #075252; }
+.practice-app .secondary { color: #233d4b; border-color: #bdcbd1; }
+.practice-app .quiet { color: #315866; }
+.practice-app header .quiet { color: #fff; }
+.practice-app header .quiet:hover { background: #2c4454; }
+.practice-app .tag { background: #eaf3f2; color: #245453; border: 1px solid #d0e3e1; font-size: 0.75rem; }
+.practice-app .page-title { margin: 1.6rem 0; }
+.practice-app .page-title p:not(.eyebrow) { font-size: 0.95rem; }
+.practice-steps { display: flex; gap: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--line); color: #6b7b84; font-size: 0.85rem; }
+.practice-steps span { display: inline-flex; align-items: center; gap: 0.5rem; }
+.practice-steps b { display: grid; place-items: center; border: 1px solid #bdc9ce; width: 26px; height: 26px; border-radius: 50%; font-size: 0.75rem; }
+.practice-steps [aria-current] { color: #075b5b; font-weight: 700; }
+.practice-steps [aria-current] b { background: #0b6868; color: #fff; border-color: #0b6868; }
+.practice-app .setup-grid { grid-template-columns: 290px minmax(0, 1fr); gap: 1.5rem; align-items: start; }
+.practice-app .settings { position: sticky; top: 1rem; padding: 1.4rem; }
+.practice-app .settings h2 { margin-bottom: 0.75rem; }
+.practice-app .settings label { font-size: 0.83rem; }
+.practice-app .settings select, .practice-app .settings input { font-size: 0.9rem; }
+.practice-app .settings .small-note { font-size: 0.75rem; }
+.assessment-settings { margin-top: 1.25rem; padding-top: 0.75rem; border-top: 1px solid var(--line); font-size: 0.83rem; }
+.scenario-library { border: 1px solid var(--line); background: #fff; border-radius: 12px; padding: 1.4rem; margin-bottom: 1.4rem; }
+.scenario-library > summary { color: #1b424f; font-weight: 700; }
+.scenario-library[open] > summary { margin-bottom: 1.25rem; }
+.scenario-library h2 { margin: 0; font-size: 1rem; }
+.library-filters { display: grid; grid-template-columns: 1.4fr 1fr; gap: 1rem; margin-bottom: 1.2rem; }
+.library-filters label { font-size: 0.8rem; margin-top: 0.3rem; }
+.library-filters input, .library-filters select { font-size: 0.9rem; }
+.scenario-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.8rem; max-height: 380px; overflow-y: auto; padding: 3px; }
+.scenario-card { display: flex; flex-direction: column; gap: 0.65rem; text-align: left; padding: 1.2rem; border: 1px solid #dce4e7; background: #fff; border-radius: 10px; font-weight: 400; min-width: 0; color: var(--navy); overflow-wrap: anywhere; }
+.scenario-card:hover { background: #f4f9f8; border-color: #6eaaa5; }
+.scenario-card[aria-pressed="true"] { background: #f0f8f6; border-color: #0b6868; box-shadow: inset 0 0 0 1px #0b6868; }
+.scenario-card .card-category { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.09em; color: #476777; }
+.scenario-card strong { font-size: 1rem; line-height: 1.4; }
+.scenario-card .card-description { color: #556773; font-size: 0.85rem; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.scenario-card .card-action { margin-top: auto; color: #075b5b; font-size: 0.8rem; font-weight: 700; }
+.practice-app .scenario-preview { border-top: 3px solid #0b6868; padding: 1.5rem; }
+.practice-app .scenario-preview h2 { font-size: 1.35rem; }
+.practice-app .customer-intro { border-color: #d9e8e6; background: #f2f7f6; border-radius: 8px; }
+.practice-app .avatar { background: #e1efeb; color: #175a53; }
+.setup-outcomes > summary { font-weight: 700; color: #1b424f; }
+.setup-outcomes[open] .section-heading { margin-top: 1.2rem; }
+.practice-app .session-heading { margin: 1.35rem 0; }
+.practice-app .session-heading h1 { font-size: 1.45rem; margin: 0; }
+.practice-app .session-heading .eyebrow { margin-bottom: 0.35rem; }
+.practice-app .timer-wrap strong { font-size: 1.25rem; }
+.practice-app .live-grid { grid-template-columns: 275px minmax(0, 1fr); gap: 1.4rem; align-items: start; }
+.practice-app .scenario-sidebar .panel { margin-bottom: 1rem; }
+.customer-profile { text-align: center; }
+.customer-orbit { display: grid; place-items: center; width: 104px; height: 104px; margin: 1.4rem auto; background: #e2efec; color: #1d6257; font-size: 2.3rem; font-weight: 600; border-radius: 50%; border: 9px solid #f1f6f4; box-shadow: 0 0 0 1px #dae7e1; }
+.customer-profile h2 { margin-bottom: 0.65rem; font-size: 1.15rem; }
+.customer-profile .small-note { margin: 1rem 0 0; font-size: 0.8rem; }
+.scenario-sidebar details { border-top: 1px solid var(--line); padding-top: 0.7rem; margin-top: 0.9rem; }
+.scenario-sidebar .small-note { font-size: 0.78rem; }
+.workspace-toolbar { padding: 1.1rem 1.3rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; border-bottom: 1px solid var(--line); }
+.workspace-toolbar .eyebrow { margin-bottom: 0.2rem; }
+.workspace-toolbar h2 { margin: 0; font-size: 1.15rem; }
+.mode-switch { display: inline-flex; padding: 3px; background: #f0f4f4; border: 1px solid var(--line); border-radius: 9px; }
+.mode-switch button { background: transparent; color: #526977; font-size: 0.85rem; padding: 0.4rem 1rem; min-height: 38px; }
+.mode-switch button[aria-pressed="true"] { background: #fff; color: #075b5b; box-shadow: 0 1px 4px #172b3a20; }
+.practice-app .chat-heading { padding: 0.8rem 1.3rem; }
+.practice-app .messages { height: clamp(280px, 42vh, 520px); background: #fff; padding: 1.3rem; }
+.practice-app .message { max-width: 85%; }
+.practice-app .message .bubble { border-radius: 12px; background: #f4f6f7; border-color: #e4e9ec; font-size: 0.94rem; }
+.practice-app .message.advisor .bubble { background: #edf5f3; border-color: #d6e7e1; }
+.practice-app .chat-status { min-height: 0; margin: 0.3rem 1.3rem; }
+.practice-app .chat-status:empty { display: none; }
+.practice-app .composer { border-top: 1px solid var(--line); padding: 0.8rem 1.3rem 1rem; background: #fafbfb; }
+.practice-app .composer label { font-size: 0.8rem; margin: 0 0 0.5rem; }
+.practice-app .composer textarea { min-height: 88px; font-size: 0.95rem; }
+.practice-app .composer .small-note { font-size: 0.75rem; }
+.practice-app .voice-controls { border-radius: 0; border: 0; border-top: 1px solid var(--line); background: #f3f8f6; margin: 0; padding: 1rem 1.3rem; }
+.practice-app .voice-controls h2 { font-size: 0.9rem; }
+.practice-app .voice-controls button { font-size: 0.8rem; padding: 0.55rem 0.8rem; }
+.voice-options { font-size: 0.8rem; margin-top: 0.75rem; }
+.practice-app .voice-controls #voiceStatus { margin: 0.65rem 0 0; font-size: 0.78rem; }
+.practice-app[data-mode="voice"] .messages { height: clamp(230px, 31vh, 380px); }
+.practice-app .report-summary { border-top: 3px solid #0b6868; }
+.practice-app .score-block strong { color: #0b6868; }
+.feedback-highlights { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.feedback-highlights li { margin-bottom: 0.5rem; font-size: 0.9rem; }
+.skills-heading { margin: 1.5rem 0 1rem; }
+.practice-app #reportOutcomes { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; align-items: start; }
+.practice-app .assessment-card { margin-bottom: 0; padding: 1.25rem; min-width: 0; }
+.practice-app .assessment-card h2 { font-size: 1rem; }
+.practice-app .score-pill { color: #075b5b; font-size: 0.8rem; }
+.skill-meter { height: 7px; background: #e7edec; border-radius: 8px; overflow: hidden; margin: 1rem 0; }
+.skill-meter span { height: 100%; display: block; background: #0b6868; border-radius: inherit; }
+.practice-app .assessment-card details { font-size: 0.88rem; }
+.practice-app .assessment-card details[open] > summary { margin-bottom: 1rem; }
+.practice-app #reportOutcomes + .panel { margin-top: 1.5rem; }
+.practice-app footer { font-size: 0.75rem; background: #fff; }
+@media (max-width: 950px) {
+  .practice-app .setup-grid { grid-template-columns: 260px minmax(0, 1fr); gap: 1rem; }
+  .practice-app .live-grid { grid-template-columns: 230px minmax(0, 1fr); gap: 1rem; }
+  .scenario-cards { grid-template-columns: 1fr; }
+  .practice-app .session-heading { flex-direction: column; align-items: stretch; }
+  .practice-app .session-actions { justify-content: flex-end; }
+  .library-filters { grid-template-columns: 1fr; gap: 0.5rem; }
+  .practice-app #reportOutcomes { grid-template-columns: 1fr; }
+}
+@media (max-width: 700px) {
+  .practice-app header { padding: 0.85rem 1rem; flex-wrap: wrap; }
+  .practice-app .brand strong { font-size: 0.95rem; }
+  .practice-app .brand-icon { width: 32px; height: 32px; font-size: 1rem; }
+  .practice-app .header-right { margin-left: auto; }
+  .practice-app header .brand span:not(.brand-icon), .practice-app #connection { display: none; }
+  .practice-app .header-right { flex-direction: row; flex-wrap: wrap; justify-content: end; font-size: 0.75rem; gap: 0.5rem; }
+  .practice-app header button { font-size: 0.75rem; min-height: 36px; padding: 0.4rem; }
+  .practice-app main { padding: 1.1rem 1rem 2rem; }
+  .practice-steps { gap: 1rem; font-size: 0.75rem; }
+  .practice-app .setup-grid, .practice-app .live-grid { grid-template-columns: 1fr; }
+  .practice-app .settings { position: static; padding: 1.2rem; }
+  .scenario-library { padding: 1.2rem; }
+  .scenario-cards { max-height: 390px; }
+  .practice-app .page-title { margin: 1.25rem 0; gap: 0.75rem; }
+  .practice-app .scenario-sidebar { display: grid; grid-template-columns: 1fr; }
+  .practice-app .customer-profile { display: none; }
+  .practice-app .scenario-sidebar .panel { padding: 1rem; }
+  .scenario-sidebar .eyebrow { margin-bottom: 0.5rem; }
+  .scenario-sidebar #activeBrief { font-size: 0.85rem; margin-bottom: 0.5rem; }
+  .scenario-sidebar .full { margin-top: 0.8rem; }
+  .workspace-toolbar { padding: 1rem; }
+  .workspace-toolbar h2 { font-size: 1rem; }
+  .mode-switch button { padding: 0.4rem 0.8rem; }
+  .practice-app .messages { height: 340px; padding: 1rem; }
+  .practice-app .message { max-width: 95%; }
+  .practice-app .chat-heading .tag { font-size: 0.65rem; }
+  .practice-app .feedback-highlights { grid-template-columns: 1fr; }
+  .practice-app .session-actions { justify-content: start; }
+  .practice-app .session-actions button { font-size: 0.78rem; padding: 0.6rem 0.75rem; }
+  .practice-app .timer-wrap { min-width: 85px; }
+  .practice-app .composer > div { gap: 0.5rem; }
+}
+@media print {
+  .practice-steps, .mode-switch, .scenario-library { display: none; }
+  .practice-app #reportOutcomes { display: block; }
+  .practice-app .assessment-card, .practice-app .feedback-highlights .panel { break-inside: avoid; }
+  .skill-meter span { print-color-adjust: exact; }
+}

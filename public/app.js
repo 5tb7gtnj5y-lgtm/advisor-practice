@@ -73,6 +73,54 @@ const voice = window.AdvisorPracticeVoice?.createControls({
 });
 function show(view) {
   for (const id of ["setup", "session", "report"]) $(id).hidden = id !== view;
+  document.body.dataset.view = view;
+  for (const [id, stage] of [["stepSetup", "setup"], ["stepSession", "session"], ["stepReport", "report"]]) {
+    if (stage === view) $(id).setAttribute("aria-current", "step");
+    else $(id).removeAttribute("aria-current");
+  }
+}
+function setInteractionMode(mode) {
+  if (mode === "text") {
+    if ($("voiceMute").getAttribute("aria-pressed") === "true") $("voiceMute").click();
+    voice?.stop();
+  }
+  document.body.dataset.mode = mode;
+  $("voiceControls").hidden = mode !== "voice";
+  $("textMode").setAttribute("aria-pressed", String(mode === "text"));
+  $("voiceMode").setAttribute("aria-pressed", String(mode === "voice"));
+  $("message").placeholder = mode === "voice"
+    ? "Your spoken words appear here. Check them before sending…"
+    : "Type your response to the customer…";
+}
+function renderScenarioLibrary() {
+  if (!catalog) return;
+  const query = $("scenarioSearch").value.trim().toLocaleLowerCase("en-GB");
+  const category = $("scenarioCategory").value;
+  const matching = catalog.scenarios.filter(s => (!category || s.category === category)
+    && [s.title, s.brief, s.category, s.customer].join(" ").toLocaleLowerCase("en-GB").includes(query));
+  $("scenarioCount").textContent = matching.length + (matching.length === 1 ? " scenario" : " scenarios");
+  $("scenarioEmpty").hidden = matching.length > 0;
+  const focusedId = document.activeElement?.dataset.scenarioId;
+  $("scenarioCards").replaceChildren();
+  for (const s of matching) {
+    const card = el("button", undefined, "scenario-card");
+    card.type = "button";
+    card.dataset.scenarioId = s.id;
+    card.setAttribute("aria-label", s.title);
+    card.setAttribute("aria-pressed", String(s.id === $("scenario").value));
+    card.append(el("span", s.category || "Customer practice", "card-category"),
+      el("strong", s.title), el("span", s.brief, "card-description"),
+      el("span", s.id === $("scenario").value ? "Selected · view briefing" : "Choose scenario →", "card-action"));
+    card.addEventListener("click", () => {
+      $("scenario").value = s.id;
+      scenarioSelected();
+      $("scenarioLibrary").open = false;
+      $("scenarioTitle").tabIndex = -1;
+      $("scenarioTitle").focus();
+    });
+    $("scenarioCards").append(card);
+    if (focusedId === s.id) card.focus({ preventScroll: true });
+  }
 }
 function initials(name) {
   return name
@@ -117,6 +165,7 @@ function scenarioSelected() {
     rubricEditor(s.outcomes || catalog.outcomes);
   }
   $("previewInitials").textContent = initials(s.customer);
+  renderScenarioLibrary();
 }
 function rubricValues() {
   return [...$("rubricEditor").children].map((row) => ({
@@ -294,6 +343,9 @@ function applyProfile(p) {
 function setBusy(value, label = "") {
   busy = value;
   $("start").disabled = value || !ready;
+  $("start").textContent = value && !session ? "Starting conversation…" : "Start conversation";
+  $("chooseAnother").disabled = value;
+  $("tryAgain").disabled = value;
   $("send").disabled = value;
   $("message").disabled = value || session?.phase !== "active";
   $("finish").disabled = value;
@@ -340,6 +392,8 @@ function adopt(s) {
   $("sessionTitle").textContent = s.config.scenario.title;
   $("chatName").textContent = s.config.scenario.customer;
   $("chatInitials").textContent = initials(s.config.scenario.customer);
+  $("customerPortrait").textContent = initials(s.config.scenario.customer);
+  $("customerProfileName").textContent = s.config.scenario.customer;
   $("activeBrief").textContent = s.config.scenario.brief;
   $("activeGuidance").textContent = s.config.scenario.guidance;
   $("activeOutcomes").replaceChildren(
@@ -431,6 +485,14 @@ function renderReport() {
   $("score").textContent = r.percent + "%";
   $("decision").textContent = r.decision;
   $("reportSummary").textContent = r.summary;
+  const strengths = r.outcomes.filter(o => o.score >= 3);
+  const development = r.outcomes.filter(o => o.score < 3);
+  $("strengthsList").replaceChildren(...(strengths.length
+    ? strengths.map(o => el("li", o.title))
+    : [el("li", "Keep practising; no outcomes reached 3 out of 4 in this attempt.")]));
+  $("developmentList").replaceChildren(...(development.length
+    ? development.map(o => el("li", o.title))
+    : [el("li", "Build consistency by trying a more challenging conversation.")]));
   $("passRule").textContent =
     "Pass mark: " +
     r.passMark +
@@ -449,17 +511,28 @@ function renderReport() {
     card.append(
       heading,
       el("p", o.description, "small-note"),
-      el("p", o.feedback),
     );
+    const meter = el("div", undefined, "skill-meter");
+    meter.setAttribute("role", "meter");
+    meter.setAttribute("aria-label", o.title + " score");
+    meter.setAttribute("aria-valuemin", "0");
+    meter.setAttribute("aria-valuemax", "4");
+    meter.setAttribute("aria-valuenow", String(o.score));
+    const fill = el("span");
+    fill.style.width = (o.score / 4 * 100) + "%";
+    meter.append(fill);
+    const detail = el("details");
+    detail.append(el("summary", "Feedback and evidence"), el("p", o.feedback));
+    card.append(meter, detail);
     if (!o.evidence.length)
-      card.append(el("p", "No credited advisor evidence.", "small-note"));
+      detail.append(el("p", "No credited advisor evidence.", "small-note"));
     for (const e of o.evidence) {
       const q = el("blockquote", "“" + e.quote + "”");
       q.append(el("cite", "Advisor · turn " + e.turn));
-      card.append(q);
+      detail.append(q);
     }
     if (o.improvement)
-      card.append(el("p", "Next time: " + o.improvement, "improvement"));
+      detail.append(el("p", "Next time: " + o.improvement, "improvement"));
     $("reportOutcomes").append(card);
   });
   $("nextSteps").replaceChildren(...r.nextSteps.map((x) => el("li", x)));
@@ -619,6 +692,30 @@ $("message").addEventListener("keydown", (e) => {
 $("finish").addEventListener("click", assess);
 $("retryAssessment").addEventListener("click", assess);
 $("scenario").addEventListener("change", scenarioSelected);
+$("scenarioSearch").addEventListener("input", renderScenarioLibrary);
+$("scenarioCategory").addEventListener("change", renderScenarioLibrary);
+$("textMode").addEventListener("click", () => setInteractionMode("text"));
+$("voiceMode").addEventListener("click", () => setInteractionMode("voice"));
+$("chooseAnother").addEventListener("click", () => {
+  if (busy) return;
+  if (session?.phase === "active" && !confirm("Leave this practice and choose another scenario? This will not assess it. Download the transcript first if you need it.")) return;
+  $("newSession").click();
+  $("scenarioLibrary").open = true;
+  $("scenarioSearch").focus();
+});
+$("tryAgain").addEventListener("click", () => {
+  if (busy || !session) return;
+  const previous = session.config;
+  $("newSession").click();
+  if ([...$("scenario").options].some(o => o.value === previous.scenario.id)) {
+    $("scenario").value = previous.scenario.id;
+    scenarioSelected();
+    $("level").value = previous.level;
+    $("minutes").value = previous.minutes;
+  }
+  $("scenarioLibrary").open = false;
+  $("start").focus();
+});
 for (const id of Object.values(customMap))
   $(id).addEventListener("input", () => {
     if ($("scenario").value === "custom") scenarioSelected();
@@ -688,6 +785,7 @@ $("printReport").addEventListener("click", () => {
 });
 $("newSession").addEventListener("click", () => {
   voice?.reset();
+  setInteractionMode("text");
   $("message").value = "";
   storage.remove("advisorPracticeSession");
   session = null;
@@ -722,6 +820,12 @@ async function init() {
       api("/api/health"),
     ]);
     catalog = c;
+    const categories = [...new Set(c.scenarios.map(s => s.category).filter(Boolean))].sort();
+    for (const category of categories) {
+      const opt = el("option", category);
+      opt.value = category;
+      $("scenarioCategory").append(opt);
+    }
     for (const s of c.scenarios) {
       const opt = el("option", s.title);
       opt.value = s.id;

@@ -265,7 +265,7 @@ Completed management assessments default to 30-day retention; attempt-token acce
 ## Optional voice practice
 
 1. Start a conversation as normal.
-2. Select **Enable spoken replies** to hear the AI customer's opening and subsequent replies. Sound is off until you choose it.
+2. Choose **Voice**, then select **Enable spoken replies** to hear the AI customer's opening and subsequent replies. Sound is off until you choose it. Choose **Text** to return to typing and stop voice playback/capture.
 3. Select **Talk**, allow the microphone if asked, and say your advisor reply. Select **Stop listening** when finished; the browser may also finish automatically after a pause.
 4. Check and edit the text in **Your reply**, then select **Send reply**. Dictation never sends anything automatically.
 5. Use **Replay customer**, **Stop speaking**, **Mute customer** or the **Customer voice** selector as needed. Selecting **Talk** stops customer playback before starting the microphone.
@@ -281,3 +281,11 @@ The existing Cloudflare AI still generates the customer's dynamic replies and as
 The GitHub branch **pre-voice-version** preserves the build immediately before voice, at commit **c3440cd80da701957010367f79290b7120df9926**. Restore its files in a new commit on `main`, keeping the current Git history; Cloudflare then deploys that commit through the existing integration. Do not force-reset `main` or remove Durable Object migrations.
 
 This is a code backup, not a database backup. A code rollback does not recover records deleted or expired later, and does not rewind management data or configuration changes. The voice update introduces no storage or schema changes.
+
+## Conversation workspace update — 5 October 2026
+
+The learner interface now uses a CAISY-inspired prepare → practise → reflect flow, with Advisor Practice branding and its existing Cloudflare AI. Browse searchable scenario cards, filter by category, choose a scenario and review its briefing. The left-hand session settings keep the existing difficulty/time choices and manager-controlled assessment rules.
+
+During practice, the customer profile and collapsible guidance sit beside a focused conversation workspace. Choose Text or Voice; switching to Text stops listening/playback and mutes spoken replies. Scores appear only after assessment. The feedback page shows demonstrated strengths (outcomes scoring 3–4), skills to develop (0–2), score bars, expandable feedback/evidence and a button to prepare the same scenario again. These groupings summarize the original scores; they do not add or alter scoring rules.
+
+The code branch `pre-caisy-ui-20261005` preserves the current build from before this redesign, at `638ec87f06a60c03525fe4fa9c7204ab0a0ee5f3`. It is a code rollback point, not a data export. No server routes, authentication, AI model, stored scenarios, assessment criteria, database schema or migrations were changed. This is not a connection to Skillsoft or a reproduction of its proprietary avatar, course recommendations or role-model engine.

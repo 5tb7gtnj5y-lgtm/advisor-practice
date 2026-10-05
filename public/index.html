@@ -11,17 +11,18 @@
     <title>Advisor Practice</title>
     <link rel="icon" href="data:," />
     <link rel="stylesheet" href="/style.css?v=voice-20261002-1" />
+    <link rel="stylesheet" href="/practice.css?v=20261005-1" />
     <script src="/voice.js?v=voice-20261002-1" defer></script>
-    <script src="/app.js?v=voice-20261002-1" defer></script>
+    <script src="/app.js?v=20261005-1" defer></script>
   </head>
-  <body>
+  <body class="practice-app" data-view="setup" data-mode="text">
     <a class="skip" href="#main">Skip to content</a>
     <header>
       <div class="brand">
         <span class="brand-icon" aria-hidden="true">ap</span>
         <div>
           <strong>Advisor Practice</strong
-          ><span>Public-service customer simulations</span>
+          ><span>Conversation simulator</span>
         </div>
       </div>
       <div class="header-right">
@@ -32,21 +33,26 @@
     </header>
     <main id="main" tabindex="-1">
       <div id="notice" class="notice" role="status" hidden></div>
+      <nav class="practice-steps" aria-label="Practice stages">
+        <span id="stepSetup" aria-current="step"><b>1</b> Prepare</span>
+        <span id="stepSession"><b>2</b> Practise</span>
+        <span id="stepReport"><b>3</b> Reflect</span>
+      </nav>
       <section id="setup">
         <div class="page-title">
           <div>
-            <p class="eyebrow">YOUR NEXT CONVERSATION</p>
-            <h1>A safe space to practise.</h1>
+            <p class="eyebrow">CONVERSATION PRACTICE</p>
+            <h1>Choose your scenario.</h1>
             <p>
-              Talk to a fictional customer. Get feedback against the outcomes
-              that matter.
+              Prepare for a real conversation. Practise safely. Learn what to try next.
             </p>
           </div>
-          <span class="tag">AI customer · trainer-reviewed assessment</span>
+          <span class="tag">Your role: customer advisor</span>
         </div>
         <div class="setup-grid">
           <form id="setupForm" class="panel settings">
-            <h2>Set up your session</h2>
+            <p class="eyebrow">YOUR PRACTICE</p>
+            <h2>Session settings</h2>
             <label for="advisor"
               >Advisor name <span class="muted">(optional)</span></label
             ><input
@@ -73,6 +79,7 @@
               <option value="60">60 minutes</option>
               <option value="0">No time limit</option>
             </select>
+            <details class="assessment-settings"><summary>Assessment requirements</summary>
             <label for="passMark">Pass mark (%)</label
             ><input
               id="passMark"
@@ -85,6 +92,7 @@
             <div class="small-note" id="passMarkNote">
               Essential outcomes must also meet the manager’s minimum score.
             </div>
+            </details>
             <button class="primary full" id="start" type="submit" disabled>
               Start conversation
             </button>
@@ -94,7 +102,17 @@
             </p>
           </form>
           <div class="setup-content">
-            <article class="panel scenario-preview">
+            <details class="scenario-library" id="scenarioLibrary" open>
+              <summary>Browse scenario library</summary>
+              <div class="section-heading"><h2 id="libraryHeading">Explore scenarios</h2><span id="scenarioCount" class="small-note" role="status" aria-live="polite"></span></div>
+              <div class="library-filters">
+                <label for="scenarioSearch">Search scenarios<input id="scenarioSearch" type="search" placeholder="Search a situation or customer…" /></label>
+                <label for="scenarioCategory">Category<select id="scenarioCategory"><option value="">All categories</option></select></label>
+              </div>
+              <div id="scenarioCards" class="scenario-cards"></div>
+              <p id="scenarioEmpty" class="small-note" hidden>No matching scenarios. Try another search or category.</p>
+            </details>
+            <article class="panel scenario-preview" id="scenarioBriefing">
               <p class="eyebrow" id="category">CUSTOMER SCENARIO</p>
               <h2 id="scenarioTitle">Loading scenarios…</h2>
               <p id="scenarioBrief"></p>
@@ -112,9 +130,10 @@
                 <p id="previewGuidance" class="preserve"></p>
               </details>
             </article>
-            <article class="panel">
+            <details class="panel setup-outcomes">
+              <summary>Skills you’ll practise</summary>
               <div class="section-heading">
-                <h2>What you’ll be assessed on</h2>
+                <h2>Assessment outcomes</h2>
                 <span class="tag">0–4 per outcome</span>
               </div>
               <div id="outcomesPreview" class="outcome-preview"></div>
@@ -122,7 +141,7 @@
                 Your report quotes your own messages as evidence. AI scores are
                 provisional until reviewed by a trainer.
               </p>
-            </article>
+            </details>
           </div>
         </div>
         <details class="panel trainer">
@@ -212,7 +231,37 @@
           </div>
         </div>
         <div class="live-grid">
+          <aside class="scenario-sidebar">
+            <article class="panel customer-profile">
+              <p class="eyebrow">YOUR CUSTOMER</p>
+              <span class="customer-orbit" id="customerPortrait" aria-hidden="true"></span>
+              <h2 id="customerProfileName"></h2>
+              <span class="tag">Fictional customer · AI role-play</span>
+              <p class="small-note">You are the advisor. Listen, ask questions and agree a helpful next step.</p>
+            </article>
+            <article class="panel">
+              <p class="eyebrow">ABOUT THIS SCENARIO</p>
+              <p id="activeBrief"></p>
+              <details>
+                <summary>Training guidance</summary>
+                <p id="activeGuidance" class="preserve"></p>
+              </details>
+              <details>
+                <summary>Skills to practise</summary>
+                <ol id="activeOutcomes" class="compact-list"></ol>
+              </details>
+              <p class="small-note">Scores appear after you finish. The clock continues while you talk or type.</p>
+              <button class="secondary full" id="chooseAnother" type="button">Choose another scenario</button>
+            </article>
+          </aside>
           <article class="panel chat-panel">
+            <div class="workspace-toolbar">
+              <div><p class="eyebrow">PRACTICE SPACE</p><h2>Your conversation</h2></div>
+              <div class="mode-switch" role="group" aria-label="Conversation mode">
+                <button id="textMode" type="button" aria-pressed="true">Text</button>
+                <button id="voiceMode" type="button" aria-pressed="false">Voice</button>
+              </div>
+            </div>
             <div class="chat-heading">
               <div>
                 <span
@@ -236,21 +285,23 @@
               aria-relevant="additions"
             ></div>
             <p class="chat-status" id="chatStatus" role="status"></p>
-            <section class="voice-controls" aria-labelledby="voiceHeading">
-              <h2 id="voiceHeading">Voice practice (optional)</h2>
+            <section class="voice-controls" id="voiceControls" aria-labelledby="voiceHeading" hidden>
+              <h2 id="voiceHeading">Talk to your customer</h2>
               <div class="button-row">
                 <button id="voiceTalk" class="secondary" type="button" aria-pressed="false" disabled>Talk</button>
                 <button id="voiceMute" class="secondary" type="button" aria-pressed="false" disabled>Enable spoken replies</button>
                 <button id="voiceReplay" class="quiet" type="button" disabled>Replay customer</button>
                 <button id="voiceStop" class="quiet" type="button" disabled>Stop speaking</button>
               </div>
+              <details class="voice-options"><summary>Voice settings and privacy</summary>
               <label for="voiceChoice">Customer voice</label>
               <select id="voiceChoice" disabled><option value="">Automatic English voice</option></select>
-              <p id="voiceStatus" class="small-note" role="status" aria-live="polite">Loading optional voice controls… you can still type.</p>
               <details class="voice-privacy">
                 <summary>Voice privacy and assessment</summary>
                 <p class="small-note">Your browser may send microphone audio to its speech provider. This website does not save recordings. Check the transcription before sending. Only the text you send enters the transcript and assessment; tone, accent and pronunciation are not scored. Use fictional details. Microphone access starts only when you press Talk.</p>
               </details>
+              </details>
+              <p id="voiceStatus" class="small-note" role="status" aria-live="polite">Loading optional voice controls… you can still type.</p>
             </section>
             <form id="messageForm" class="composer">
               <label for="message">Your reply as the advisor</label
@@ -276,38 +327,20 @@
               </button>
             </div>
           </article>
-          <aside>
-            <article class="panel">
-              <p class="eyebrow">ADVISOR BRIEFING</p>
-              <p id="activeBrief"></p>
-              <details open>
-                <summary>Training guidance</summary>
-                <p id="activeGuidance" class="preserve"></p>
-              </details>
-            </article>
-            <article class="panel">
-              <h2>Key outcomes</h2>
-              <ol id="activeOutcomes" class="compact-list"></ol>
-              <p class="small-note">
-                The clock continues while the customer responds. A reply
-                submitted before the deadline can finish afterwards. Maximum: 30
-                advisor messages.
-              </p>
-            </article>
-          </aside>
         </div>
       </section>
       <section id="report" hidden>
         <div class="page-title">
           <div>
             <p class="eyebrow">CONVERSATION REVIEW</p>
-            <h1>Your assessment</h1>
+            <h1>Reflect on your conversation.</h1>
             <p id="reportSubtitle"></p>
           </div>
           <div class="button-row">
             <button id="downloadReport" class="primary">Download report</button
             ><button id="printReport" class="secondary">Print / save PDF</button
             ><button id="newSession" class="quiet">New session</button>
+            <button id="tryAgain" class="secondary">Practise this scenario again</button>
           </div>
         </div>
         <div class="report-summary panel">
@@ -325,6 +358,11 @@
           AI assessment is provisional. A trainer should review the evidence and
           record the final outcome below.
         </div>
+        <div class="feedback-highlights">
+          <article class="panel"><p class="eyebrow">BUILD ON THESE</p><h2>Demonstrated strengths</h2><ul id="strengthsList"></ul></article>
+          <article class="panel"><p class="eyebrow">YOUR NEXT FOCUS</p><h2>Skills to develop</h2><ul id="developmentList"></ul></article>
+        </div>
+        <h2 class="skills-heading">Your skills breakdown</h2>
         <div id="reportOutcomes"></div>
         <article class="panel">
           <h2>Focus for your next conversation</h2>
@@ -384,12 +422,12 @@
         </button>
       </div>
       <ol>
-        <li>Choose a scenario, difficulty and time limit.</li>
+        <li>Search or choose a scenario card, then set difficulty and time limit.</li>
         <li>Read the briefing and fictional training guidance.</li>
         <li>
           Select <strong>Start conversation</strong> and respond as the advisor.
         </li>
-        <li>For voice practice, select <strong>Enable spoken replies</strong>, then <strong>Talk</strong>. Allow microphone access, speak, check the text and select <strong>Send reply</strong>. Typing always works. Use <strong>Mute customer</strong> to turn sound off.</li>
+        <li>Choose <strong>Voice</strong>, then <strong>Enable spoken replies</strong> and <strong>Talk</strong>. Allow microphone access, speak, check the text and select <strong>Send reply</strong>. Choose <strong>Text</strong> to return to typing.</li>
         <li>
           Select <strong>End & assess</strong>, or let the timer end the
           conversation.

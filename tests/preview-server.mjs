@@ -45,7 +45,7 @@ env.ASSETS = {
   async fetch(req) {
     let path = new URL(req.url).pathname;
     if (path === "/") path = "/index.html";
-    if (!["/index.html", "/app.js", "/style.css"].includes(path))
+    if (!["/index.html", "/app.js", "/style.css", "/practice.css", "/voice.js"].includes(path))
       return new Response("Not found", { status: 404 });
     const content = await fs.readFile(
       new URL("../public" + path, import.meta.url),

@@ -162,7 +162,7 @@ No new installation is required. Keep the existing GitHub connection and Cloudfl
 ### Try voice
 
 1. Start a practice conversation as normal.
-2. Click **Enable spoken replies** to hear the customer.
+2. Choose **Voice**, then click **Enable spoken replies** to hear the customer. Choose **Text** to return to typing and stop voice playback/listening.
 3. Click **Talk** and allow microphone access if asked. Speak your advisor reply.
 4. Click **Stop listening**, or wait for the browser to finish after a pause.
 5. Check and correct the words in **Your reply**, then click **Send reply**. Your words are never sent automatically.
@@ -182,3 +182,15 @@ This is tap-to-talk, turn-by-turn practice. You do not need to hold the button d
 The branch **pre-voice-version** in your existing GitHub repository holds the code from before this update: commit **c3440cd80da701957010367f79290b7120df9926**. To restore it, make a new commit on `main` containing that branch's files. The existing Cloudflare connection deploys the restored code. A developer can do this without deleting Git history or force-pushing.
 
 Do not delete Durable Objects or remove their migration history. This backup covers code only: it does not restore expired/deleted results or roll back later scenario/account changes. The voice update itself changes no stored-data formats.
+
+## Updated practice layout — no installation needed
+
+Refresh your existing site after deployment (Windows: Ctrl + F5 if it still shows the old layout).
+
+1. Search the scenario library or choose a category. Select a scenario card to open its briefing.
+2. Set your difficulty and time on the left, then click **Start conversation**.
+3. Respond in **Text** mode, or choose **Voice** for the existing speech controls. Guidance and practice skills can be opened from the left-hand panel.
+4. Click **End & assess** to see your feedback, score and evidence. Scores are not displayed during the conversation.
+5. Open **Feedback and evidence** under a skill to understand its score. **Practise this scenario again** returns to its setup with your previous difficulty/time; click **Start conversation** for a new attempt.
+
+Managers use the existing Management Area. No new keys, services or Cloudflare settings are needed. The branch `pre-caisy-ui-20261005` holds the code from immediately before this layout update, for a code rollback if needed.

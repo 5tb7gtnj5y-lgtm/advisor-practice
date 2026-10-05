@@ -35,3 +35,9 @@ Pre-deployment checks passed: all 55 automated tests, JavaScript syntax, Wrangle
 Voice adds only frontend assets and tests. Existing Worker routes, manager authentication, assessment code, Durable Objects, bindings and migrations are unchanged. A pre-voice code branch was saved before the update; it is not a database backup.
 
 Device acceptance: start a fictional attempt, enable spoken replies, dictate a reply, stop, correct a word, send, hear the customer's response, replay, mute, and finish an assessment. Verify the assessed transcript contains only the text that was sent. Deny microphone access and confirm typing still works. Check leaving the page stops capture/playback. The clock continues during dictation and playback.
+
+## CAISY-inspired learner workspace — 5 October 2026
+
+Pre-deployment checks passed: all 55 existing automated tests, syntax check, deployment dry run, and a temporary JSDOM integration run executing the actual HTML/app/voice scripts through the real Worker routes with mocked AI. That run checked unique element IDs, search/no-results/card selection, retained difficulty/time, stage indicators, Text/Voice switching without sending, reply rendering, assessment/evidence, strengths/development, score meters and preparing the same scenario again. JSDOM was installed only for that local verification; no production dependency was added.
+
+The local preview harness now serves the voice and practice stylesheet assets as well as the original app assets. It remains a mock-only harness, not the production server. The redesign changes learner UI assets only; existing management security, storage, AI and assessments remain unchanged. Live visual acceptance should cover scenario filtering, starting a session, mode switching, transcript persistence on reload, guidance disclosure and the feedback screen. Real microphone/speaker device acceptance remains separate.
