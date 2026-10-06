@@ -360,12 +360,18 @@ export class ManagementRegistry {
     }
     const sm = path.match(/^\/api\/management\/scenarios\/([-\w]+)$/);
     if (sm && method === "DELETE") {
-      const s = await this.ctx.storage.get("scenario:" + sm[1]);
-      if (!s) fail("Scenario not found.", 404);
-      if (s.status !== "draft" || (await this.ctx.storage.get("used:" + s.id)))
-        fail("Archive this scenario to preserve assessment history.");
-      await this.ctx.storage.delete("scenario:" + s.id);
-      await this.audit(actor.username, "scenario-deleted", s.id);
+      const d = await data(req);
+      if (d.confirmed !== true) fail("Confirm permanent deletion first.");
+      await this.ctx.storage.transaction(async (tx) => {
+        const s = await tx.get("scenario:" + sm[1]);
+        if (!s) fail("Scenario not found.", 404);
+        if (d.version !== s.version)
+          fail("Another manager changed this scenario. Refresh the library before deleting.", 409);
+        // Attempts and results hold their own snapshots. Keep that history.
+        await tx.delete("scenario:" + s.id);
+        await tx.delete("used:" + s.id);
+      });
+      await this.audit(actor.username, "scenario-deleted", sm[1]);
       return send({ deleted: true });
     }
     if (path === "/api/management/generate" && method === "POST") {

@@ -239,7 +239,38 @@ test("new attempts reject disabled scenarios while existing snapshots survive ed
     409,
   );
 });
-test("completed result includes immutable snapshot and transcript; trainer review preserves AI marks", async () => {
+test("permanent deletion supports every scenario status and requires confirmation, version and authentication", async () => {
+  const f = fixture(), auth = await setup(f);
+  for (const status of ["draft", "published", "archived"]) {
+    const s = await scenario(f, auth, { status, enabled: true });
+    const path = "scenarios/" + s.id;
+    const body = { confirmed: true, version: s.version };
+    assert.equal((await call(f, path, "DELETE", body)).status, 401);
+    assert.equal((await call(f, path, "DELETE", body, { ...auth, csrf: "wrong" })).status, 403);
+    assert.equal((await call(f, path, "DELETE", { version: s.version }, auth)).status, 400);
+    assert.equal((await call(f, path, "DELETE", { ...body, version: 0 }, auth)).status, 409);
+    assert.ok(await f.ctx.storage.get("scenario:" + s.id));
+    assert.equal((await call(f, path, "DELETE", body, auth)).status, 200);
+    assert.equal(await f.ctx.storage.get("scenario:" + s.id), undefined);
+    assert.ok(!(await call(f, "scenarios", "GET", null, auth)).data.some(x => x.id === s.id));
+    assert.equal((await call(f, path, "DELETE", body, auth)).status, 404);
+  }
+});
+test("deleting a published scenario removes it from selection but preserves an active conversation", async () => {
+  const f = fixture(), auth = await setup(f);
+  const s = await scenario(f, auth, { status: "published", enabled: true });
+  const started = await worker.fetch(request("/api/sessions", "POST", { scenarioId: s.id }), f.env);
+  const session = await started.json();
+  assert.equal(started.status, 201);
+  assert.equal((await call(f, "scenarios/" + s.id, "DELETE", { confirmed: true, version: s.version }, auth)).status, 200);
+  const catalog = await (await worker.fetch(request("/api/catalog"), f.env)).json();
+  assert.ok(!catalog.scenarios.some(x => x.id === s.id));
+  assert.notEqual((await worker.fetch(request("/api/sessions", "POST", { scenarioId: s.id }), f.env)).status, 201);
+  const saved = await (await worker.fetch(request("/api/sessions/" + session.id), f.env)).json();
+  assert.equal(saved.config.scenario.title, s.title);
+  assert.equal((await worker.fetch(request("/api/sessions/" + session.id + "/message", "POST", { content: "How can I help?", requestId: crypto.randomUUID() }), f.env)).status, 200);
+});
+test("completed result includes immutable snapshot and transcript; trainer review and scenario deletion preserve AI marks", async () => {
   const f = fixture(),
     auth = await setup(f),
     s = await scenario(f, auth, { status: "published", enabled: true });
@@ -278,6 +309,14 @@ test("completed result includes immutable snapshot and transcript; trainer revie
   assert.equal(review.data.review.percent, 50);
   assert.equal(review.data.report.percent, 0);
   assert.equal(review.data.review.reviewer, "admin");
+  assert.equal((await call(f, "scenarios/" + s.id, "DELETE", { confirmed: true, version: s.version }, auth)).status, 200);
+  const afterDelete = await call(f, "results/" + session.id, "GET", null, auth);
+  assert.equal(afterDelete.status, 200);
+  assert.deepEqual(afterDelete.data.config, review.data.config);
+  assert.deepEqual(afterDelete.data.report, review.data.report);
+  assert.deepEqual(afterDelete.data.review, review.data.review);
+  assert.deepEqual(afterDelete.data.messages, result.data.messages);
+  assert.equal((await call(f, "results", "GET", null, auth)).data.total, 1);
   await worker.fetch(request("/api/sessions/" + session.id, "DELETE"), f.env);
   assert.equal(
     (await call(f, "results/" + session.id, "GET", null, auth)).status,

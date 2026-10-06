@@ -231,14 +231,21 @@ async function loadLibrary() {
         await loadLibrary();
       }),
     );
-    if (s.status === "draft")
-      controls.append(
-        button("Delete draft", async () => {
-          if (!confirm("Delete this draft?")) return;
-          await api("scenarios/" + s.id, "DELETE");
-          await loadLibrary();
-        }),
-      );
+    const remove = button("Permanently delete", async () => {
+      if (!confirm(`Permanently delete "${s.title}"?\n\nThis removes it from the scenario library and cannot be undone. Existing assessments, transcripts and conversations are kept.\n\nChoose Cancel to keep it.`)) return;
+      await api("scenarios/" + s.id, "DELETE", {
+        version: s.version,
+        confirmed: true,
+      });
+      if (editing?.id === s.id) {
+        editing = null;
+        $("editor").hidden = true;
+      }
+      await loadLibrary();
+      notice("Scenario permanently deleted. Existing training records are kept.");
+    });
+    remove.className = "danger";
+    controls.append(remove);
     row.append(controls);
     $("scenarioList").append(row);
   }

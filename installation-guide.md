@@ -124,7 +124,7 @@ If your Worker currently uses manual dashboard deployments and has no GitHub Bui
 3. Review the visible briefing, hidden customer facts, guidance, criteria, weights, pass mark, essential minimums, difficulty and time limit. Generated guidance is a suggestion; replace it with your approved training guidance.
 4. Click **Test** to practise against that scenario without publishing. Test assessments are excluded from normal results and retained for one day.
 5. Click **Publish** to make the scenario available immediately. Trainees should refresh their setup page to see new scenarios. Later edits affect new attempts; existing attempts keep their original scenario and rubric.
-6. Use **Switch Off**, **Archive**, **Duplicate**, or **Edit** in the library. Only unused drafts can be deleted. Archive scenarios with assessment history.
+6. Use **Switch Off**, **Archive**, **Duplicate**, or **Edit** in the library. Choose **Permanently delete** and confirm to remove a draft, published or archived scenario. This cannot be undone. Existing assessments, transcripts and conversations are kept, but new trainees cannot select the deleted scenario. Use **Archive** if you may want to use it again.
 7. Open **Results**, find a trainee or scenario, and choose **Open assessment & transcript**. Review exact evidence, feedback and coaching. You can change manager scores and record a final decision with reasoning. Original AI scores remain intact.
 8. The administrator uses **Accounts & settings** to create managers, reset their passwords, disable accounts, and set retention. Changing or disabling a manager account revokes its old sessions. Managers cannot manage accounts or retention.
 
